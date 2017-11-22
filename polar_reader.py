@@ -103,6 +103,9 @@ def heartRateThread(devName, address):
     """
     # Disconnections counter
     disconnCounter = 0
+    # Time sampling
+    sampleTimeNew = 0
+    sampleTimeOld = 0
 
     # Initialize Heart Rate monitor
     monitor = HRmonitor(devName, address)
@@ -118,15 +121,21 @@ def heartRateThread(devName, address):
 
         monitor.startMonitor()
 
+        # Initialize sampleTime
+        sampleTimeOld = time() 
         # Reader continuous loop
         while(True):
             try:
                 beat = monitor.getHeartRate()
+                sampleTimeNew = time()
                 sleep(0.1)
                 if(beat != 0):
-                    output = str(time()) + '\t' + str(beat) + '\n'
-                    filePointer.write(output)
-                    print(output)
+                    # Limit HR to 222bpm and/or avoid false readings
+                    if(sampleTimeNew - sampleTimeOld > 0.27):
+                        sampleTimeOld = sampleTimeNew
+                        output = str(time()) + '\t' + str(beat) + '\n'
+                        filePointer.write(output)
+                        print(output)
                     # Reset disconnection counter for read failures
                     disconnCounter = 0
                 else:
