@@ -17,7 +17,7 @@ def triggerHRThread(devName, address):
     """
     HRThreads[devName] = threading.Thread(name=devName,
                                           target=heartRateThread,
-                                          args=[address])
+                                          args=[devName, address])
     HRThreads[devName].start()
 
 def controllerHRThread():

@@ -1,7 +1,7 @@
 import os
 import sys
 import uuid
-from time import sleep
+from time import sleep, time
 
 import bluepy.btle as btle
 from bluepy.btle import BTLEException
@@ -40,7 +40,8 @@ class HRmonitor():
     heartRate_measure_uuid = "00002a37-0000-1000-8000-00805f9b34fb"
     battery_service_uuid = "0000180f-0000-1000-8000-00805f9b34fb"
 
-    def __init__(self, address):
+    def __init__(self, devName, address):
+        self.devName = devName
         self.address = address
         try:
             # Connect to the device
@@ -62,7 +63,7 @@ class HRmonitor():
         try:
             print("Writing CCC...")
             self.CCC_descriptor.write(b"\x01\x00", withResponse=False)
-            sleep(1.0)
+            sleep(0.1)
             print("CCC value: " + str(self.CCC_descriptor.read()))
         except Exception as e:
             print(e)
@@ -94,7 +95,7 @@ class HRmonitor():
             return 0
             print(e)
 
-def heartRateThread(address):
+def heartRateThread(devName, address):
     """
     This method instantiate the heart rate monitor and read data from it.
     The method automatically manage read failures and terminate on complete
@@ -104,18 +105,28 @@ def heartRateThread(address):
     disconnCounter = 0
 
     # Initialize Heart Rate monitor
-    monitor = HRmonitor(address)
+    monitor = HRmonitor(devName, address)
     # Activate the monitor only on correct connection
     if(monitor.device != None):
+        # Open a reading file
+        filename = devName.split(' ')[2]+'.csv'
+        if(os.path.isfile('./'+filename)):
+            filePointer = open(filename, 'a')
+        else:
+            filePointer = open(filename, 'w')
+            filePointer.write('TIME\tHR\n')
+
         monitor.startMonitor()
 
         # Reader continuous loop
         while(True):
             try:
                 beat = monitor.getHeartRate()
-                sleep(1.0)
+                sleep(0.1)
                 if(beat != 0):
-                    print(beat)
+                    output = str(time()) + '\t' + str(beat) + '\n'
+                    filePointer.write(output)
+                    print(output)
                     # Reset disconnection counter for read failures
                     disconnCounter = 0
                 else:
@@ -133,9 +144,13 @@ def heartRateThread(address):
                 # Try connection only for momentary disconnections
                 if(disconnCounter < 3):
                     monitor.terminate()
-                    sleep(1.0)
-                    monitor = HRmonitor(address)
+                    sleep(0.1)
+                    monitor = HRmonitor(devName, address)
                     if(monitor.device != None):
                         monitor.startMonitor()
                 else:
+                    monitor.terminate()
                     break
+
+        # Close file
+        filePointer.close()

@@ -10,7 +10,16 @@ The system has been currently tested on this environment:
 * Python 3.5.2 and 3.6.2
 * Bluepy library 1.1.2
 
+The system is designed to work with Python > 3, Python 2 will not be supported.
+
 To install bluepy directly from git:
 
 > sudo pip install git+https://github.com/IanHarvey/bluepy.git
+
+To execute the code without sudo, some permissions must be set to bluepy:
+
+> sudo apt-get install libcap2-bin
+> sudo setcap 'cap_net_raw,cap_net_admin+eip' $PATH_TO_HCITOOL
+> sudo setcap 'cap_net_raw,cap_net_admin+eip' $PATH_TO_PYTHON
+> sudo setcap 'cap_net_raw,cap_net_admin+eip' $PATH_TO_BLUEPY_HELPER
 
