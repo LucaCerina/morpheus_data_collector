@@ -3,16 +3,9 @@ import csv
 import numpy as np
 
 def findwindow (data, start, sizewindow = 300):
-    print(data[start].shape)
-    print(start)
     index = np.argwhere(data[:, 0]>data[start][0]+sizewindow)
     if index.any():
-        print('ok')
         return index[0,0]
-    else:
-        print('no')
-        
-    
 
 def getRR(data):
     RR = []
@@ -32,10 +25,6 @@ def pNN100(RR):
     return (np.count_nonzero(np.where(SSD > 0.1)))/len(SSD)
 
 def statistic(data, startwindow, endwindow):
-    print('shape in statistic:')
-    print(data.shape)
-    print('startwindow '+str(startwindow)+ str(type(startwindow)))
-    print('endwindow '+str(endwindow)+ str(type(endwindow)))
     m = np.mean(data[startwindow:endwindow], axis = 0)[1]
     sd = np.std(data[startwindow:endwindow], axis = 0)[1]
     pnn100 = pNN100(data[startwindow:endwindow][1])
@@ -48,11 +37,12 @@ def ba_analysis():#devName,address):
     # filename  =  devName.split(' ')[2]+'.csv'
     filename = 'test.csv'
     try:
-        with open(filename, newline = '\n') as csvfile:
-            csvfile.readline() #skip the headers
-            data = csv.reader(csvfile, delimiter = '\t', quotechar = '|', quoting=csv.QUOTE_NONNUMERIC)
-            data = list(data)
-            data = np.array(data)
+        data = np.genfromtxt(filename, dtype=float, skip_header=1)
+        # with open(filename, newline = '\n') as csvfile:
+        #     csvfile.readline() #skip the headers
+        #     data = csv.reader(csvfile, delimiter = '\t', quotechar = '|', quoting=csv.QUOTE_NONNUMERIC)
+        #     data = list(data)
+        #     data = np.array(data)
     except Exception as e:
         print(e)
 
@@ -73,6 +63,8 @@ def ba_analysis():#devName,address):
             for k in range(1,len(ins)-1):
                 data = np.insert(data, [i+k], ins[k], axis=0)
         i+=(1+len(ins))
+
+
     # Cerca finestre
     # filename  =  devName.split(' ')[2]+'Analysis.csv'
     filename = 'test_out.csv'
@@ -89,7 +81,7 @@ def ba_analysis():#devName,address):
         if endwindow:
             m,sd,pnn100 = statistic(RR,startwindow,endwindow)
             output  =  str(RR[startwindow][0]) + '\t' + str(RR[endwindow][0]) +'\t' + str(m) +'\t' + str(sd) +'\t' + str(pnn100) + '\n'
-            filePointer.write(output) 
+            filePointer.write(output)
             startwindow = findwindow(data,startwindow,20)
             if not startwindow:
                 break
