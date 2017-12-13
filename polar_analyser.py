@@ -1,22 +1,16 @@
-import numpy as np
-import csv
 import os
+import csv
+import numpy as np
 
 def findwindow (data, start, sizewindow = 300):
     print(data[start].shape)
     print(start)
     index = np.argwhere(data[:, 0]>data[start][0]+sizewindow)
-    # print(index)
     if index.any():
         print('ok')
-        return index[0]
+        return index[0,0]
     else:
         print('no')
-    # if index[0]==[]:
-    #     return index [0]
-    # else:
-    #     print (index[0][0])
-    #     return index[0][0] 
         
     
 
@@ -25,6 +19,7 @@ def getRR(data):
     for i in range(len(data)):
         RR.append([data[i][0], 1/data[i][1]])
     RR = np.array(RR)
+    print(RR)
     return RR
 
 def pNN100(RR):
@@ -37,9 +32,13 @@ def pNN100(RR):
     return (np.count_nonzero(np.where(SSD > 0.1)))/len(SSD)
 
 def statistic(data, startwindow, endwindow):
+    print('shape in statistic:')
+    print(data.shape)
+    print('startwindow '+str(startwindow)+ str(type(startwindow)))
+    print('endwindow '+str(endwindow)+ str(type(endwindow)))
     m = np.mean(data[startwindow:endwindow], axis = 0)[1]
     sd = np.std(data[startwindow:endwindow], axis = 0)[1]
-    pnn100 = pNN100(data[startwindow:endwindow])
+    pnn100 = pNN100(data[startwindow:endwindow][1])
     return m, sd, pnn100
 
 
@@ -54,7 +53,6 @@ def ba_analysis():#devName,address):
             data = csv.reader(csvfile, delimiter = '\t', quotechar = '|', quoting=csv.QUOTE_NONNUMERIC)
             data = list(data)
             data = np.array(data)
-        pass
     except Exception as e:
         print(e)
 
@@ -63,7 +61,8 @@ def ba_analysis():#devName,address):
     data = data[np.where(data[:, 2] == lastid)]
 
     #interpolazione se necesssaria
-    for i in range(len(data)-1):
+    i=0
+    while i<len(data)-2:
         delta_t = data[i+1][0]-data[i][0]
         if (delta_t > 1.5):
             n_dati = int(np.floor(delta_t))+1
@@ -71,11 +70,9 @@ def ba_analysis():#devName,address):
             intpolBPM = np.linspace(data[i][1], data[i+1][1], n_dati)
             intpolID = np.array([lastid for x in range(n_dati)])
             ins = np.stack((intpolTime, intpolBPM, intpolID), axis=1)
-            # ins = np.array([intpolTime,intpolBPM,intpolID])
-            # ins = np.transpose(ins)
-            print(ins)
             for k in range(1,len(ins)-1):
                 data = np.insert(data, [i+k], ins[k], axis=0)
+        i+=(1+len(ins))
     # Cerca finestre
     # filename  =  devName.split(' ')[2]+'Analysis.csv'
     filename = 'test_out.csv'
@@ -90,12 +87,13 @@ def ba_analysis():#devName,address):
     while True:
         endwindow = findwindow(data,startwindow)# finestra da 5 min
         if endwindow:
-            m,sd,pnn100 = statistic(RR,startwindow,endwindow-1)
-            output  =  str(RR[startwindow][0]) + '\t' + str(RR[endwindow-1][0]) +'\t' + str(m) +'\t' + str(sd) +'\t' + str(pnn100) + '\n'
+            m,sd,pnn100 = statistic(RR,startwindow,endwindow)
+            output  =  str(RR[startwindow][0]) + '\t' + str(RR[endwindow][0]) +'\t' + str(m) +'\t' + str(sd) +'\t' + str(pnn100) + '\n'
             filePointer.write(output) 
             startwindow = findwindow(data,startwindow,20)
             if not startwindow:
                 break
+            startwindow=startwindow
         else:
             break
     else:
