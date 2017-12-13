@@ -19,6 +19,8 @@ class heartDelegate(btle.DefaultDelegate):
 
     def handleNotification(self, cHandle, data):
         # Heart rate handle
+        #print(cHandle)
+        #print(data)
         if(cHandle == 37):
             # HR beats-per-minute byte
             self.message = data[1]
@@ -65,7 +67,7 @@ class HRmonitor():
             self.CCC_descriptor.write(b"\x01\x00", withResponse=False)
             sleep(0.1)
             print("CCC value: " + str(self.CCC_descriptor.read()))
-        except Exception as e:
+        except Exception as e:          
             print(e)
 
     def stopMonitor(self):
@@ -106,6 +108,8 @@ def heartRateThread(devName, address):
     # Time sampling
     sampleTimeNew = 0
     sampleTimeOld = 0
+    # Reading index
+    readIdx = 0
 
     # Initialize Heart Rate monitor
     monitor = HRmonitor(devName, address)
@@ -114,10 +118,12 @@ def heartRateThread(devName, address):
         # Open a reading file
         filename = devName.split(' ')[2]+'.csv'
         if(os.path.isfile('./'+filename)):
-            filePointer = open(filename, 'a')
+            filePointer = open(filename, 'a+')
+            filePointer.seek(filePointer.tell()-2)
+            readIdx = int(filePointer.read()[0])+1
         else:
             filePointer = open(filename, 'w')
-            filePointer.write('TIME\tHR\n')
+            filePointer.write('TIME\tHR\tWID\n')
 
         monitor.startMonitor()
 
@@ -133,7 +139,7 @@ def heartRateThread(devName, address):
                     # Limit HR to 222bpm and/or avoid false readings
                     if(sampleTimeNew - sampleTimeOld > 0.27):
                         sampleTimeOld = sampleTimeNew
-                        output = str(time()) + '\t' + str(beat) + '\n'
+                        output = str(time()) + '\t' + str(beat) + '\t' + str(readIdx) + '\n'
                         filePointer.write(output)
                         print(output)
                     # Reset disconnection counter for read failures
