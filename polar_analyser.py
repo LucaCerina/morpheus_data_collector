@@ -40,7 +40,7 @@ def getRR(data):
     for i in range(len(data)):
         RR.append([data[i][0], 1/data[i][1]])
     RR = np.array(RR)
-    print(RR)lastid
+    print(RR)
     return RR
 
 def pNN100(RR):
