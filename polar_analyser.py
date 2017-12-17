@@ -25,6 +25,7 @@ def interpolation(data):
     i = 0
     while i < len(data)-2:
         delta_t = data[i+1][0]-data[i][0]
+        ins=[]
         if delta_t > 1.5:
             n_dati = int(np.floor(delta_t))+1
             intpolTime = np.linspace(data[i][0], data[i+1][0], n_dati)
@@ -48,41 +49,42 @@ def getRR(data):
     #given the data array, returns a list of RR intervals format is [[timestamp, RR interval]]
     RR = []
     for i in range(len(data)):
-        RR.append([data[i][0], 1/data[i][1]])
+        RR.append([data[i][0], 1/(data[i][1]/60)])
+
     RR = np.array(RR)
     return RR
 
-def pNN100(RR):
+def pNN20(RR):
     #given the RR inteval array (without timestamps)
     #calculates successive differences between said intervals
-    #returns pNN100 index
+    #returns pNN20 index
     SSD = []
     for i in range(len(RR)-1):
         SSD.append(RR[i+1]-RR[i])
     SSD = np.array(SSD)
     SSD = np.abs(SSD)
-    return (np.count_nonzero(np.where(SSD > 0.1)))/len(SSD)
+    return (np.count_nonzero(np.where(SSD > 0.02))/len(SSD))
 
 def statistic(RR, startwindow, endwindow):
     #given the RR interval array (with timestamps)
-    #calculates mean, standard deviation, and pNN100 in the interval between indexes startwindow and endwindow
-    #returns calculated indexes mean, standard deviation, pNN100 in that order
+    #calculates mean, standard deviation, and pNN20 in the interval between indexes startwindow and endwindow
+    #returns calculated indexes mean, standard deviation, pNN20 in that order
     m = np.mean(RR[startwindow:endwindow], axis=0)[1]
     sd = np.std(RR[startwindow:endwindow], axis=0)[1]
-    pnn100 = pNN100(RR[startwindow:endwindow][1])
-    return m, sd, pnn100
+    pnn20 = pNN20(RR[startwindow:endwindow,1])
+    return m, sd, pnn20
 
 def parse_write(data, startwindow, filePointer):
     # Given the data array, the starting index, an an opened file object
     #calculate statistical indexes of 5 minutes windows that start every 20 seconds (overlapped)
-    #writes to file in the format: TimeStart TimeEnd Mean SD pNN100 (Times are in unix time format)
+    #writes to file in the format: TimeStart TimeEnd Mean SD pNN20 (Times are in unix time format)
     #returns the index corresponding to the start of the first window that couldn't be analyzed (<5min)
     RR = getRR(data)
     while True:
         endwindow = findwindow(data,startwindow)# finestra da 5 min data
         if endwindow:
-            m,sd,pnn100 = statistic(RR,startwindow,endwindow)
-            output  =  str(RR[startwindow][0]) + '\t' + str(RR[endwindow][0]) +'\t' + str(m) +'\t' + str(sd) +'\t' + str(pnn100) + '\n'
+            m,sd,pnn20 = statistic(RR,startwindow,endwindow)
+            output  =  str(RR[startwindow][0]) + '\t' + str(RR[endwindow][0]) +'\t' + str(m) +'\t' + str(sd) +'\t' + str(pnn20) + '\n'
             filePointer.write(output)
             startwindow = findwindow(data,startwindow,20)
             if not startwindow:
@@ -92,8 +94,8 @@ def parse_write(data, startwindow, filePointer):
 
 
 def therad_analysis():#devName,address):
-    #Open csv file
     # filename  =  devName.split(' ')[2]+'.csv'
+    
     sleep(300)# Wait at least 5 min for a viable window
     failures = 0
     cursor = 1
@@ -104,7 +106,7 @@ def therad_analysis():#devName,address):
         filePointer = open(filename, 'a')
     else:
         filePointer = open(filename, 'w')
-        filePointer.write('TIME_START\tTIME_END\tMEAN\tSDNN\tpNN100\n')
+        filePointer.write('TIME_START\tTIME_END\tMEAN\tSDNN\tpNN20\n')
       
     while failures < 3:
         new_data, cursor = load(cursor)
@@ -122,10 +124,9 @@ def therad_analysis():#devName,address):
         filePointer.close()
 
 
-def batch_analysis():#devName,address):
+def batch_analysis(filename):#devName,address):
     #Open csv file
     # filename  =  devName.split(' ')[2]+'.csv'
-    filename = 'test.csv'
     try:
         data = np.genfromtxt(filename, dtype=float, skip_header=1)
         # with open(filename, newline = '\n') as csvfile:
@@ -144,6 +145,7 @@ def batch_analysis():#devName,address):
     i=0
     while i<len(data)-2:
         delta_t = data[i+1][0]-data[i][0]
+        ins = []
         if (delta_t > 1.5):
             n_dati = int(np.floor(delta_t))+1
             intpolTime = np.linspace(data[i][0], data[i+1][0], n_dati)
@@ -152,7 +154,7 @@ def batch_analysis():#devName,address):
             ins = np.stack((intpolTime, intpolBPM, intpolID), axis=1)
             for k in range(1,len(ins)-1):
                 data = np.insert(data, [i+k], ins[k], axis=0)
-        i+=(1+len(ins))
+        i += (1+len(ins))
 
     # Controllo se la finestra di lettura ha durata abbastanza lunga da avere significanza
     if findwindow(data,0):
@@ -165,7 +167,7 @@ def batch_analysis():#devName,address):
             filePointer  =  open(filename, 'a')
         else:
             filePointer  =  open(filename, 'w')
-            filePointer.write('TIME_START\tTIME_END\tMEAN\tSDNN\tpNN100\n')
+            filePointer.write('TIME_START\tTIME_END\tMEAN\tSDNN\tpNN20\n')
 
         # Cerca finestre
         RR = getRR(data)
@@ -173,8 +175,8 @@ def batch_analysis():#devName,address):
         while True:
             endwindow = findwindow(data,startwindow)# finestra da 5 min data
             if endwindow:
-                m,sd,pnn100 = statistic(RR,startwindow,endwindow)
-                output  =  str(RR[startwindow][0]) + '\t' + str(RR[endwindow][0]) +'\t' + str(m) +'\t' + str(sd) +'\t' + str(pnn100) + '\n'
+                m,sd,pnn20 = statistic(RR,startwindow,endwindow)
+                output  =  str(RR[startwindow][0]) + '\t' + str(RR[endwindow][0]) +'\t' + str(m) +'\t' + str(sd) +'\t' + str(pnn20) + '\n'
                 filePointer.write(output)
                 startwindow = findwindow(data,startwindow,20)
                 if not startwindow:
