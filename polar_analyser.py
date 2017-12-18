@@ -1,6 +1,8 @@
 import os
 import numpy as np
 from time import sleep
+#prova
+
 
 def load(skiplines):#devName,address):
     #Open csv file, finds last window and flushes the rest of the data.
