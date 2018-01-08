@@ -120,7 +120,11 @@ def heartRateThread(devName, address):
         if(os.path.isfile('./'+filename)):
             filePointer = open(filename, 'a+')
             filePointer.seek(filePointer.tell()-2)
-            readIdx = int(filePointer.read()[0])+1
+            try:
+                readIdx = int(filePointer.read()[0])+1
+            except ValueError:
+                # Catch exception when only headers are available on the file
+                readIdx = 0
         else:
             filePointer = open(filename, 'w')
             filePointer.write('TIME\tHR\tWID\n')
