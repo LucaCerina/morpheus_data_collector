@@ -12,6 +12,11 @@ The system has been currently tested on this environment:
 
 The system is designed to work with Python > 3, Python 2 will not be supported.
 
+The Reader Client and Server employ the ZeroMQ library, tested on:
+
+* ZeroMQ 4.2.0
+* PyZMQ 16.0.3
+
 To install bluepy directly from git:
 
 > sudo pip install git+https://github.com/IanHarvey/bluepy.git
@@ -19,7 +24,10 @@ To install bluepy directly from git:
 To execute the code without sudo, some permissions must be set to bluepy:
 
 > sudo apt-get install libcap2-bin
+
 > sudo setcap 'cap_net_raw,cap_net_admin+eip' $PATH_TO_HCITOOL
+
 > sudo setcap 'cap_net_raw,cap_net_admin+eip' $PATH_TO_PYTHON
+
 > sudo setcap 'cap_net_raw,cap_net_admin+eip' $PATH_TO_BLUEPY_HELPER
 
