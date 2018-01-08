@@ -4,7 +4,7 @@ from time import sleep
 import bluepy.btle as btle
 from bluepy.btle import BTLEException
 
-from polar_reader import heartRateThread
+from polar_reader_client import heartRateThread
 
 # Devices and current threads dictionaries
 polarDevices = {}
