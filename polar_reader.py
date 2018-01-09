@@ -49,13 +49,14 @@ class HRmonitor():
             # Connect to the device
             self.device = btle.Peripheral(self.address)
             self.device.setDelegate(heartDelegate())
-            print("Connected to: " + self.address)
+            print("Connected to: " + self.devName)
         
             # Read descriptors
             self.heartrate_service = self.device.getServiceByUUID(self.heartRate_service_uuid)
             self.CCC_descriptor = self.heartrate_service.getDescriptors(forUUID = self.CCC_descriptor_uuid)[0]
         except BTLEException as e:
             # Return None if connection fails
+            print("Failed to connect to: " + self.devName)
             self.device = None
 
     def startMonitor(self):
@@ -64,6 +65,8 @@ class HRmonitor():
         """
         try:
             print("Writing CCC...")
+            self.CCC_descriptor.write(b"\x00\x00", withResponse=False)
+            sleep(0.05)
             self.CCC_descriptor.write(b"\x01\x00", withResponse=False)
             sleep(0.1)
             print("CCC value: " + str(self.CCC_descriptor.read()))
@@ -116,12 +119,13 @@ def heartRateThread(devName, address):
     # Activate the monitor only on correct connection
     if(monitor.device != None):
         # Open a reading file
-        filename = devName.split(' ')[2]+'.csv'
+        deviceName = devName.split(' ')[2]
+        filename = deviceName +'.csv'
         if(os.path.isfile('./'+filename)):
             filePointer = open(filename, 'a+')
-            filePointer.seek(filePointer.tell()-2)
+            filePointer.seek(filePointer.tell()-3)
             try:
-                readIdx = int(filePointer.read()[0])+1
+                readIdx = int(filePointer.read().split('\n')[0])+1
             except ValueError:
                 # Catch exception when only headers are available on the file
                 readIdx = 0
@@ -145,7 +149,7 @@ def heartRateThread(devName, address):
                         sampleTimeOld = sampleTimeNew
                         output = str(time()) + '\t' + str(beat) + '\t' + str(readIdx) + '\n'
                         filePointer.write(output)
-                        print(output)
+                        print(deviceName + " " + output)
                     # Reset disconnection counter for read failures
                     disconnCounter = 0
                 else:
@@ -157,18 +161,19 @@ def heartRateThread(devName, address):
                 monitor.terminate()
                 break
             except BTLEException as e:
-                print("disconnection")
+                print("disconnection of: " + deviceName)
                 # Update counter
                 disconnCounter += 1
                 # Try connection only for momentary disconnections
                 if(disconnCounter < 3):
-                    monitor.terminate()
+                    # monitor.terminate()
                     sleep(0.1)
                     monitor = HRmonitor(devName, address)
                     if(monitor.device != None):
                         monitor.startMonitor()
                 else:
-                    monitor.terminate()
+                    print("Max Disconnection")
+                    #monitor.terminate()
                     break
 
         # Close file

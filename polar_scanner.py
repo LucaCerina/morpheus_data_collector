@@ -4,7 +4,7 @@ from time import sleep
 import bluepy.btle as btle
 from bluepy.btle import BTLEException
 
-from polar_reader_client import heartRateThread
+from polar_reader import heartRateThread
 
 # Devices and current threads dictionaries
 polarDevices = {}
@@ -47,7 +47,12 @@ def polarScan():
     scanner = btle.Scanner()
     while (True):
         # Scan devices
-        devices = scanner.scan(5)
+        try:
+            devices = scanner.scan(5)
+        except BTLEException as e:
+            print(e)
+            sleep(2)
+            scanner = btle.Scanner()
         for dev in devices:
             # Get complete local name
             devName = dev.getValueText(0x9)
