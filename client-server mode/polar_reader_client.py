@@ -116,8 +116,10 @@ def heartRateThread(devName, address):
 
     # Initialize the ZMQ connection
     zContext = zmq.Context()
-    zSocket = zContext.socket(zmq.REQ)
-    zSocket.connect('tcp://127.0.0.1:3000') # TODO do not hardcode IP and port
+    zSocket = zContext.socket(zmq.PUSH)
+    zSocket.setsockopt(zmq.SNDTIMEO, 300)
+    zSocket.setsockopt(zmq.RCVTIMEO, 300)
+    zSocket.connect('tcp://10.79.3.194:3000') # TODO do not hardcode IP and port
     deviceID = devName.split(' ')[2]
 
     # Initialize Heart Rate monitor
@@ -144,9 +146,8 @@ def heartRateThread(devName, address):
                         output = {'time': time(), 'HR':beat, 'deviceID':deviceID}
                         # filePointer.write(output)
                         #zSocket.send_string(output)
-                        zSocket.send_json(output)
-                        print(output, end='')
-                        reply = zSocket.recv_string()
+                        zSocket.send_json(output, zmq.NOBLOCK)
+                        print(output)
                     # Reset disconnection counter for read failures
                     disconnCounter = 0
                 else:
