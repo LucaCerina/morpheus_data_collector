@@ -140,9 +140,11 @@ def heartRateThread(devName, address):
                     if(sampleTimeNew - sampleTimeOld > 0.27):
                         sampleTimeOld = sampleTimeNew
                         # output = str(time()) + '\t' + str(beat) + '\t' + str(readIdx) + '\n'
-                        output = str(time()) + '\t' + str(beat) + '\t' + deviceID + '\n'
+                        # output = str(time()) + '\t' + str(beat) + '\t' + deviceID + '\n'
+                        output = {'time': time(), 'HR':beat, 'deviceID':deviceID}
                         # filePointer.write(output)
-                        zSocket.send_string(output)
+                        #zSocket.send_string(output)
+                        zSocket.send_json(output)
                         print(output, end='')
                         reply = zSocket.recv_string()
                     # Reset disconnection counter for read failures
