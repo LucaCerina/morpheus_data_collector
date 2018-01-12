@@ -143,9 +143,8 @@ def heartRateThread(devName, address):
                         output = str(time()) + '\t' + str(beat) + '\t' + deviceID + '\n'
                         # filePointer.write(output)
                         zSocket.send_string(output)
-                        print(output)
+                        print(output, end='')
                         reply = zSocket.recv_string()
-                        print(reply)
                     # Reset disconnection counter for read failures
                     disconnCounter = 0
                 else:

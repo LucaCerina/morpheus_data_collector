@@ -149,7 +149,7 @@ def heartRateThread(devName, address):
                         sampleTimeOld = sampleTimeNew
                         output = str(time()) + '\t' + str(beat) + '\t' + str(readIdx) + '\n'
                         filePointer.write(output)
-                        print(deviceName + " " + output)
+                        print(deviceName + " " + output, end='')
                     # Reset disconnection counter for read failures
                     disconnCounter = 0
                 else:
