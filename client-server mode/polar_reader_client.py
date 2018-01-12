@@ -65,8 +65,10 @@ class HRmonitor():
         """
         try:
             print("Writing CCC...")
+            self.CCC_descriptor.write(b"\x00\x00", withResponse=False)
+            sleep(0.05)
             self.CCC_descriptor.write(b"\x01\x00", withResponse=False)
-            sleep(0.1)
+            sleep(0.05)
             print("CCC value: " + str(self.CCC_descriptor.read()))
         except Exception as e:          
             print(e)
@@ -122,20 +124,7 @@ def heartRateThread(devName, address):
     monitor = HRmonitor(devName, address)
     # Activate the monitor only on correct connection
     if(monitor.device != None):
-        # Open a reading file
-        #filename = devName.split(' ')[2]+'.csv'
-        #if(os.path.isfile('./'+filename)):
-        #    filePointer = open(filename, 'a+')
-        #    filePointer.seek(filePointer.tell()-2)
-        #    try:
-        #        readIdx = int(filePointer.read()[0])+1
-        #    except ValueError:
-        #        # Catch exception when only headers are available on the file
-        #        readIdx = 0
-        #else:
-        #    filePointer = open(filename, 'w')
-        #    filePointer.write('TIME\tHR\tWID\n')
-
+        # Start the monitor
         monitor.startMonitor()
 
         # Initialize sampleTime
@@ -173,15 +162,14 @@ def heartRateThread(devName, address):
                 disconnCounter += 1
                 # Try connection only for momentary disconnections
                 if(disconnCounter < 3):
-                    monitor.terminate()
+                    # monitor.terminate()
                     sleep(0.1)
                     monitor = HRmonitor(devName, address)
                     if(monitor.device != None):
                         monitor.startMonitor()
                 else:
-                    monitor.terminate()
+                    # monitor.terminate()
                     break
 
         # Close file
-        #filePointer.close()
         zSocket.close()

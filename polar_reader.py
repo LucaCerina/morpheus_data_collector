@@ -68,7 +68,7 @@ class HRmonitor():
             self.CCC_descriptor.write(b"\x00\x00", withResponse=False)
             sleep(0.05)
             self.CCC_descriptor.write(b"\x01\x00", withResponse=False)
-            sleep(0.1)
+            sleep(0.05)
             print("CCC value: " + str(self.CCC_descriptor.read()))
         except Exception as e:          
             print(e)
