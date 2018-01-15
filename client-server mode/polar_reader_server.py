@@ -10,6 +10,7 @@ data = list()
 while True:
     try:
         message = zServer.recv_json()
+        data.append(message)
         print(message)
     except KeyboardInterrupt:
         break
