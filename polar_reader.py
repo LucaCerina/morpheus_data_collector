@@ -12,24 +12,35 @@ class heartDelegate(btle.DefaultDelegate):
     """
     Bluepy delegate that handles the recognition of heartbeats
     """
-    message = 0
+    message = 82
 
     def __init__(self):
         btle.DefaultDelegate.__init__(self)
 
     def handleNotification(self, cHandle, data):
         # Heart rate handle
-        #print(cHandle)
-        #print(data)
+        print("cHandle: {}".format(cHandle))
+        print(data)
         if(cHandle == 37):
             # HR beats-per-minute byte
             self.message = data[1]
+        elif(cHandle == 16):
+            self.message = parse_message(data)
 
     def getLastBeat(self):
         """
         Access the delegate message
         """
         return self.message
+
+    def parse_message(self, data):
+        """
+        Extract informations from HR message
+        """
+        print("prova")
+        hrFormat = data[0] & 0x01
+        print("data {} hrFormat: {}".format(hex(data[0]),hex(hrFormat)))
+        return 82
 
 class HRmonitor():
     """
@@ -47,13 +58,17 @@ class HRmonitor():
         self.address = address
         try:
             # Connect to the device
-            self.device = btle.Peripheral(self.address)
+            #print("test connection")
+            #print("isinstance: {}".format(isinstance(self.address, ScanEntry))
+            self.device = btle.Peripheral(self.address, addrType="random")
             self.device.setDelegate(heartDelegate())
             print("Connected to: " + self.devName)
         
             # Read descriptors
             self.heartrate_service = self.device.getServiceByUUID(self.heartRate_service_uuid)
+            #print(self.heartrate_service.uuid)
             self.CCC_descriptor = self.heartrate_service.getDescriptors(forUUID = self.CCC_descriptor_uuid)[0]
+            #print(self.CCC_descriptor.uuid)        
         except BTLEException as e:
             # Return None if connection fails
             print("Failed to connect to: " + self.devName)
@@ -95,7 +110,8 @@ class HRmonitor():
         """
         try:
             self.device.waitForNotifications(1.0)
-            return self.device.delegate.getLastBeat()
+            #return self.device.delegate.getLastBeat()
+            return 82
         except Exception as e:
             return 0
             print(e)
@@ -141,6 +157,7 @@ def heartRateThread(devName, address):
         while(True):
             try:
                 beat = monitor.getHeartRate()
+                beat = 82
                 sampleTimeNew = time()
                 sleep(0.1)
                 if(beat != 0):
