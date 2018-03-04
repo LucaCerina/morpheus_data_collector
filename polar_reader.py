@@ -12,35 +12,64 @@ class heartDelegate(btle.DefaultDelegate):
     """
     Bluepy delegate that handles the recognition of heartbeats
     """
-    message = 82
 
     def __init__(self):
         btle.DefaultDelegate.__init__(self)
 
     def handleNotification(self, cHandle, data):
         # Heart rate handle
-        print("cHandle: {}".format(cHandle))
-        print(data)
-        if(cHandle == 37):
+        #print("cHandle: {}".format(cHandle))
+        self.data = data
+        #if(cHandle == 37):
             # HR beats-per-minute byte
-            self.message = data[1]
-        elif(cHandle == 16):
-            self.message = parse_message(data)
+        #    self.message = data[1]
+        #elif(cHandle == 16):
+        #    self.message = parse_message(data)
 
     def getLastBeat(self):
         """
         Access the delegate message
         """
-        return self.message
+        return self.parse_message(self.data)
 
     def parse_message(self, data):
         """
         Extract informations from HR message
         """
-        print("prova")
+        reading = {"HR":None, "RR":list()}
         hrFormat = data[0] & 0x01
-        print("data {} hrFormat: {}".format(hex(data[0]),hex(hrFormat)))
-        return 82
+
+        sensorContact = True
+        contactSupported = not ((data[0] & 0x06) == 0)
+        if contactSupported:
+            sensorContact = ((data[0] & 0x06) >> 1) == 3
+
+        energyExpended = (data[0] & 0x10) >> 3
+
+        rrPresent = (data[0] & 0x10) >> 4
+        hrValue = data[1] + (data[2] << 8) if hrFormat == 1 else data[1]
+        if ( not contactSupported & hrValue == 0):
+            sensorContact = False
+
+        offset = hrFormat + 2
+        energy = 0
+        if energyExpended == 1:
+            energy = (data[offset] & 0xFF) + ((data[offset + 1] & 0xFF) << 8)
+            offset += 2
+        
+        rrVals = list()
+        #print("rrPresent: {}".format(rrPresent))
+        if rrPresent == 1:
+            dataLen = len(data)
+            #print("offset: {} dataLen {}".format(offset, dataLen))
+            while offset < dataLen:
+                rrValue = int((data[offset] & 0xFF) + ((data[offset +1] & 0xFF) << 8))
+                offset +=2
+                rrVals.append(rrValue)
+
+        reading["HR"] = hrValue
+        reading["RR"] = rrVals
+        return reading
 
 class HRmonitor():
     """
@@ -110,8 +139,7 @@ class HRmonitor():
         """
         try:
             self.device.waitForNotifications(1.0)
-            #return self.device.delegate.getLastBeat()
-            return 82
+            return self.device.delegate.getLastBeat()
         except Exception as e:
             return 0
             print(e)
@@ -139,15 +167,16 @@ def heartRateThread(devName, address):
         filename = deviceName +'.csv'
         if(os.path.isfile('./'+filename)):
             filePointer = open(filename, 'a+')
-            filePointer.seek(filePointer.tell()-3)
+            filePointer.seek(filePointer.tell() - 20) #TODO: improve the hardcoded value
+            lastLine = filePointer.read()
             try:
-                readIdx = int(filePointer.read().split('\n')[0])+1
+                readIdx = int(lastLine.split("\t")[-1].split("\n")[0]) + 1
             except ValueError:
                 # Catch exception when only headers are available on the file
                 readIdx = 0
         else:
             filePointer = open(filename, 'w')
-            filePointer.write('TIME\tHR\tWID\n')
+            filePointer.write('TIME\tHR\tRR\tWID\n')
 
         monitor.startMonitor()
 
@@ -156,17 +185,23 @@ def heartRateThread(devName, address):
         # Reader continuous loop
         while(True):
             try:
-                beat = monitor.getHeartRate()
-                beat = 82
+                reading = monitor.getHeartRate()
                 sampleTimeNew = time()
                 sleep(0.1)
-                if(beat != 0):
+                if(reading["HR"] != None):
                     # Limit HR to 222bpm and/or avoid false readings
                     if(sampleTimeNew - sampleTimeOld > 0.27):
                         sampleTimeOld = sampleTimeNew
-                        output = str(time()) + '\t' + str(beat) + '\t' + str(readIdx) + '\n'
-                        filePointer.write(output)
-                        print(deviceName + " " + output, end='')
+                        if reading["RR"]:
+                            for i in range(len(reading["RR"])):
+                                print(reading["RR"][i])   
+                                output = "{}\t{}\t{}\t{}\n".format(str(time()), reading["HR"], reading["RR"][i], readIdx)
+                                filePointer.write(output)
+                                print("{}\t{}".format(deviceName, output, end='', flush=True))
+                        else:
+                                output = "{}\t{}\t{}\t{}\n".format(str(time()), reading["HR"], 0, readIdx)
+                                filePointer.write(output)
+                                print("{}\t{}".format(deviceName, output, end='', flush=True))                          
                     # Reset disconnection counter for read failures
                     disconnCounter = 0
                 else:
