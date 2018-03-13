@@ -8,29 +8,8 @@ import zmq
 from bluepy.btle import BTLEException
 from tendo import singleton
 
-
-class heartDelegate(btle.DefaultDelegate):
-    """
-    Bluepy delegate that handles the recognition of heartbeats
-    """
-    message = 0
-
-    def __init__(self):
-        btle.DefaultDelegate.__init__(self)
-
-    def handleNotification(self, cHandle, data):
-        # Heart rate handle
-        #print(cHandle)
-        #print(data)
-        if(cHandle == 37):
-            # HR beats-per-minute byte
-            self.message = data[1]
-
-    def getLastBeat(self):
-        """
-        Access the delegate message
-        """
-        return self.message
+sys.path.append('../')
+from heartDelegate import heartDelegate
 
 class HRmonitor():
     """
@@ -119,7 +98,7 @@ def heartRateThread(devName, address):
     zSocket = zContext.socket(zmq.PUSH)
     zSocket.setsockopt(zmq.SNDTIMEO, 300)
     zSocket.setsockopt(zmq.RCVTIMEO, 300)
-    zSocket.connect('tcp://10.79.3.194:3000') # TODO do not hardcode IP and port
+    zSocket.connect('tcp://127.0.0.1:3000') # TODO do not hardcode IP and port
     deviceID = devName.split(' ')[2]
 
     # Initialize Heart Rate monitor
@@ -134,16 +113,16 @@ def heartRateThread(devName, address):
         # Reader continuous loop
         while(True):
             try:
-                beat = monitor.getHeartRate()
+                reading = monitor.getHeartRate()
                 sampleTimeNew = time()
                 sleep(0.1)
-                if(beat != 0):
+                if(reading["HR"] != 0):
                     # Limit HR to 222bpm and/or avoid false readings
                     if(sampleTimeNew - sampleTimeOld > 0.27):
                         sampleTimeOld = sampleTimeNew
                         # output = str(time()) + '\t' + str(beat) + '\t' + str(readIdx) + '\n'
                         # output = str(time()) + '\t' + str(beat) + '\t' + deviceID + '\n'
-                        output = {'time': time(), 'HR':beat, 'deviceID':deviceID}
+                        output = {'time': time(), 'HR':reading["HR"], "RR":reading["RR"], 'deviceID':deviceID}
                         # filePointer.write(output)
                         #zSocket.send_string(output)
                         zSocket.send_json(output, zmq.NOBLOCK)
