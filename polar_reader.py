@@ -69,6 +69,7 @@ class heartDelegate(btle.DefaultDelegate):
 
         reading["HR"] = hrValue
         reading["RR"] = rrVals
+        #print("{} {} {}".format(hrValue, rrVals, reading)) TODO check why it returns a int sometimes
         return reading
 
 class HRmonitor():
@@ -89,7 +90,10 @@ class HRmonitor():
             # Connect to the device
             #print("test connection")
             #print("isinstance: {}".format(isinstance(self.address, ScanEntry))
-            self.device = btle.Peripheral(self.address, addrType="random")
+            if devName[6:9] == "OH1":
+                self.device = btle.Peripheral(self.address)
+            else: #H10
+                self.device = btle.Peripheral(self.address, addrType="random")
             self.device.setDelegate(heartDelegate())
             print("Connected to: " + self.devName)
         
