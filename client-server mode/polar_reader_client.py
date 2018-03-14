@@ -2,6 +2,7 @@ import os
 import sys
 import uuid
 from time import sleep, time
+import rfc3339 # required by InfluxDB
 
 import bluepy.btle as btle
 import zmq
@@ -120,9 +121,13 @@ def heartRateThread(devName, address):
                     # Limit HR to 222bpm and/or avoid false readings
                     if(sampleTimeNew - sampleTimeOld > 0.27):
                         sampleTimeOld = sampleTimeNew
+                        timeString = rfc3339.format(sampleTimeNew)
                         # output = str(time()) + '\t' + str(beat) + '\t' + str(readIdx) + '\n'
                         # output = str(time()) + '\t' + str(beat) + '\t' + deviceID + '\n'
-                        output = {'time': time(), 'HR':reading["HR"], "RR":reading["RR"], 'deviceID':deviceID}
+                        if(reading['RR']):
+                            output = {'time': timeString, 'HR':reading["HR"], 'RR':reading["RR"], 'deviceID':deviceID}
+                        else:
+                            output = {'time': timeString, 'HR':reading["HR"], 'RR':-1, 'deviceID':deviceID}
                         # filePointer.write(output)
                         #zSocket.send_string(output)
                         zSocket.send_json(output, zmq.NOBLOCK)

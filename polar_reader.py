@@ -2,6 +2,7 @@ import os
 import sys
 import uuid
 from time import sleep, time
+import rfc3339
 
 import bluepy.btle as btle
 from bluepy.btle import BTLEException
@@ -133,14 +134,15 @@ def heartRateThread(devName, address):
                     # Limit HR to 222bpm and/or avoid false readings
                     if(sampleTimeNew - sampleTimeOld > 0.27):
                         sampleTimeOld = sampleTimeNew
+                        timeString = rfc3339.format(sampleTimeNew)
                         if reading["RR"]:
                             for i in range(len(reading["RR"])):
                                 print(reading["RR"][i])   
-                                output = "{}\t{}\t{}\t{}\n".format(str(time()), reading["HR"], reading["RR"][i], readIdx)
+                                output = "{}\t{}\t{}\t{}\n".format(timeString, reading["HR"], reading["RR"][i], readIdx)
                                 filePointer.write(output)
                                 print("{}\t{}".format(deviceName, output, end='', flush=True))
                         else:
-                                output = "{}\t{}\t{}\t{}\n".format(str(time()), reading["HR"], 0, readIdx)
+                                output = "{}\t{}\t{}\t{}\n".format(timeString, reading["HR"], 0, readIdx)
                                 filePointer.write(output)
                                 print("{}\t{}".format(deviceName, output, end='', flush=True))                          
                     # Reset disconnection counter for read failures
