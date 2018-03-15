@@ -17,6 +17,12 @@ The Reader Client and Server employ the ZeroMQ library, tested on:
 * ZeroMQ 4.2.0
 * PyZMQ 16.0.3
 
+The Reader Client and Server requires RFC3339 library.
+
+Other dependencies:
+
+* InfluxDB for time-series backup
+
 To install bluepy directly from git:
 
 > sudo pip install git+https://github.com/IanHarvey/bluepy.git
