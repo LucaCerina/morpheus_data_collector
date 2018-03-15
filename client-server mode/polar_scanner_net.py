@@ -1,3 +1,4 @@
+from multiprocessing import Process
 import threading
 from time import sleep
 
@@ -15,7 +16,7 @@ def triggerHRThread(devName, address):
     This method spawns an heart rate monitor thread triggered by the Scanner
     The thread ends when the Polar device disconnects
     """
-    HRThreads[devName] = threading.Thread(name=devName,
+    HRThreads[devName] = Process(name=devName,
                                           target=heartRateThread,
                                           args=[devName, address])
     HRThreads[devName].start()
