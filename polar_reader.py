@@ -130,7 +130,7 @@ def heartRateThread(devName, address):
                 reading = monitor.getHeartRate()
                 sampleTimeNew = time()
                 sleep(0.1)
-                if(reading["HR"] != None):
+                if(reading["HR"] != 0):
                     # Limit HR to 222bpm and/or avoid false readings
                     if(sampleTimeNew - sampleTimeOld > 0.27):
                         sampleTimeOld = sampleTimeNew
