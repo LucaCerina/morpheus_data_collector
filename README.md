@@ -17,7 +17,7 @@ The Reader Client and Server employ the ZeroMQ library, tested on:
 * ZeroMQ 4.2.0
 * PyZMQ 16.0.3
 
-The Reader Client and Server requires RFC3339 library.
+The Reader Client and Server requires udatetime/RFC3339 library.
 
 Other dependencies:
 

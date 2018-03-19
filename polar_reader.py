@@ -2,7 +2,7 @@ import os
 import sys
 import uuid
 from time import sleep, time
-import rfc3339
+import udatetime
 
 import bluepy.btle as btle
 from bluepy.btle import BTLEException
@@ -134,7 +134,8 @@ def heartRateThread(devName, address):
                     # Limit HR to 222bpm and/or avoid false readings
                     if(sampleTimeNew - sampleTimeOld > 0.27):
                         sampleTimeOld = sampleTimeNew
-                        timeString = rfc3339.format(sampleTimeNew)
+                        #timeString = rfc3339.format(sampleTimeNew) #TODO find RFC3339 library with 
+                        timeString = udatetime.to_string(udatetime.fromtimestamp(sampleTimeNew))
                         if reading["RR"]:
                             for i in range(len(reading["RR"])):
                                 print(reading["RR"][i])   

@@ -2,7 +2,7 @@ import os
 import sys
 import uuid
 from time import sleep, time
-import rfc3339 # required by InfluxDB
+import udatetime #RFC3339 required by influxDB
 
 import bluepy.btle as btle
 import zmq
@@ -121,7 +121,7 @@ def heartRateThread(devName, address):
                     # Limit HR to 222bpm and/or avoid false readings
                     if(sampleTimeNew - sampleTimeOld > 0.27):
                         sampleTimeOld = sampleTimeNew
-                        timeString = rfc3339.format(sampleTimeNew)
+                        timeString = udatetime.to_string(udatetime.fromtimestamp(sampleTimeNew))
                         # output = str(time()) + '\t' + str(beat) + '\t' + str(readIdx) + '\n'
                         # output = str(time()) + '\t' + str(beat) + '\t' + deviceID + '\n'
                         if(reading['RR']):
