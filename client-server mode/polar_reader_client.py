@@ -1,5 +1,6 @@
 import os
 import sys
+sys.path.append('../')
 import uuid
 from time import sleep, time
 
@@ -11,7 +12,7 @@ from tendo import singleton
 
 from heartDelegate import heartDelegate
 
-sys.path.append('../')
+
 
 class HRmonitor():
     """

@@ -79,10 +79,22 @@ if __name__ == "__main__":
     print(SrvAddr)
 
     # Ping the Server
-    zContext = zmq.Context()
-    zClient = zContext.socket(zmq.CLIENT)
-    zClient.connect('tcp://'+SrvAddr+':5555')
-    zClient.send(b'PING')
+    try:
+        zContext = zmq.Context()
+        zClient = zContext.socket(zmq.REQ)
+        zClient.setsockopt(zmq.LINGER, 0)
+        zClient.setsockopt(zmq.RCVTIMEO, 1000)
+        zClient.connect('tcp://'+SrvAddr+':5555')
+        zClient.send(b'PING', zmq.NOBLOCK)
+        reply = zClient.recv(copy=False)
+        if(reply.bytes != b'OK'):
+            print('Server refused connection')
+            sys.exit(1)
+        else:
+            print('Server is alive!')
+    except zmq.error.Again:
+        print("Server is offline")
+        sys.exit(1)
 
     # Spawn the scanner thread
     scanThread = threading.Thread(name="scanner", target=polarScan)

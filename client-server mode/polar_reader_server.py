@@ -54,13 +54,17 @@ def receiverThread():
 def statusThread():
     # ZeroMQ server
     zContext = zmq.Context()
-    zServer = zContext.socket(zmq.SERVER)
+    zServer = zContext.socket(zmq.REP)
     zServer.bind('tcp://*:5555')
 
     while True:
         msg = zServer.recv(copy=False)
-        print('Server received {} from {}'.format(msg.bytes, msg.routing_id))
-        time.sleep(1.0)
+        print(dir(msg))
+        if(msg.bytes == b'PING'):
+            zServer.send(b'OK')
+        else:
+            zServer.send(b'ERR')
+        time.sleep(0.5)
 
     zServer.close()
     zContext.term()    
