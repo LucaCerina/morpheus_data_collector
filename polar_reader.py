@@ -8,84 +8,7 @@ import udatetime
 from bluepy.btle import BTLEException
 from tendo import singleton
 
-from heartDelegate import heartDelegate
-
-
-class HRmonitor():
-    """
-    This class contains the methods necessary to connect to the device.
-    Specifically the Polar OH1.
-    """
-    # Useful GATT descriptors
-    CCC_descriptor_uuid = "00002902-0000-1000-8000-00805f9b34fb"
-    heartRate_service_uuid = "0000180d-0000-1000-8000-00805f9b34fb"
-    heartRate_measure_uuid = "00002a37-0000-1000-8000-00805f9b34fb"
-    battery_service_uuid = "0000180f-0000-1000-8000-00805f9b34fb"
-
-    def __init__(self, devName, address):
-        self.devName = devName
-        self.address = address
-        try:
-            # Connect to the device
-            #print("test connection")
-            #print("isinstance: {}".format(isinstance(self.address, ScanEntry))
-            if devName[6:9] == "OH1":
-                self.device = btle.Peripheral(self.address)
-            else: #H10
-                self.device = btle.Peripheral(self.address, addrType="random")
-            self.device.setDelegate(heartDelegate())
-            print("Connected to: " + self.devName)
-        
-            # Read descriptors
-            self.heartrate_service = self.device.getServiceByUUID(self.heartRate_service_uuid)
-            #print(self.heartrate_service.uuid)
-            self.CCC_descriptor = self.heartrate_service.getDescriptors(forUUID = self.CCC_descriptor_uuid)[0]
-            #print(self.CCC_descriptor.uuid)        
-        except BTLEException as e:
-            # Return None if connection fails
-            print("Failed to connect to: " + self.devName)
-            self.device = None
-
-    def startMonitor(self):
-        """
-        This method starts the Polar monitor by writing the CCC descriptor
-        """
-        try:
-            print("Writing CCC...")
-            self.CCC_descriptor.write(b"\x00\x00", withResponse=False)
-            sleep(0.05)
-            self.CCC_descriptor.write(b"\x01\x00", withResponse=False)
-            sleep(0.05)
-            print("CCC value: " + str(self.CCC_descriptor.read()))
-        except Exception as e:          
-            print(e)
-
-    def stopMonitor(self):
-        """
-        This method stops the Polar monitor by resetting the CCC descriptor
-        """
-        self.CCC_descriptor.write(b"\x00\x00", withResponse=False)
-
-    def terminate(self):
-        """
-        This method terminates the connection with the device
-        """
-        try:
-            self.device.disconnect()
-        except Exception as e:
-            print(e)
-
-    def getHeartRate(self):
-        """
-        This method wait the HR notification and return its value, otherwise it
-        returns 0
-        """
-        try:
-            self.device.waitForNotifications(2.0)
-        except Exception as e:
-            return {'HR':0, 'RR':[]}
-            print(e)
-        return self.device.delegate.getLastBeat()
+from heartDelegate import heartDelegate, HRmonitor
 
 def heartRateThread(devName, address):
     """
@@ -130,7 +53,7 @@ def heartRateThread(devName, address):
             try:
                 reading = monitor.getHeartRate()
                 sampleTimeNew = time()
-                sleep(0.1)
+                #sleep(0.1)
                 if(reading["HR"] != 0):
                     # Limit HR to 222bpm and/or avoid false readings
                     if(sampleTimeNew - sampleTimeOld > 0.27):
@@ -164,10 +87,11 @@ def heartRateThread(devName, address):
                 # Try connection only for momentary disconnections
                 if(disconnCounter < 3):
                     # monitor.terminate()
-                    sleep(0.1)
                     monitor = HRmonitor(devName, address)
                     if(monitor.device != None):
                         monitor.startMonitor()
+                    else:
+                        sleep(0.1)
                 else:
                     print("Max Disconnection")
                     #monitor.terminate()

@@ -1,4 +1,7 @@
 import bluepy.btle as btle
+from bluepy.btle import BTLEException
+
+from time import sleep
 
 class heartDelegate(btle.DefaultDelegate):
     """
@@ -63,3 +66,71 @@ class heartDelegate(btle.DefaultDelegate):
         reading["RR"] = rrVals
         #print("{} {} {}".format(hrValue, rrVals, reading)) TODO check why it returns a int sometimes
         return reading
+
+class HRmonitor():
+    """
+    This class contains the methods necessary to connect to the device.
+    Specifically the Polar OH1.
+    """
+    # Useful GATT descriptors
+    CCC_descriptor_uuid = "00002902-0000-1000-8000-00805f9b34fb"
+    heartRate_service_uuid = "0000180d-0000-1000-8000-00805f9b34fb"
+    heartRate_measure_uuid = "00002a37-0000-1000-8000-00805f9b34fb"
+    battery_service_uuid = "0000180f-0000-1000-8000-00805f9b34fb"
+
+    def __init__(self, devName, address):
+        self.devName = devName
+        self.address = address
+        try:
+            # Connect to the device
+            self.device = btle.Peripheral(self.address)
+            self.device.setDelegate(heartDelegate())
+            print("Connected to: " + self.address)
+        
+            # Read descriptors
+            self.heartrate_service = self.device.getServiceByUUID(self.heartRate_service_uuid)
+            self.CCC_descriptor = self.heartrate_service.getDescriptors(forUUID = self.CCC_descriptor_uuid)[0]
+        except BTLEException as e:
+            # Return None if connection fails
+            self.device = None
+
+    def startMonitor(self):
+        """
+        This method starts the Polar monitor by writing the CCC descriptor
+        """
+        try:
+            print("Writing CCC...")
+            #self.CCC_descriptor.write(b"\x00\x00", withResponse=False)
+            #sleep(0.05)
+            self.CCC_descriptor.write(b"\x01\x00", withResponse=False)
+            sleep(0.05)
+            #print("CCC value: " + str(self.CCC_descriptor.read()))
+        except Exception as e:          
+            print(e)
+
+    def stopMonitor(self):
+        """
+        This method stops the Polar monitor by resetting the CCC descriptor
+        """
+        self.CCC_descriptor.write(b"\x00\x00", withResponse=False)
+
+    def terminate(self):
+        """
+        This method terminates the connection with the device
+        """
+        try:
+            self.device.disconnect()
+        except Exception as e:
+            print(e)
+
+    def getHeartRate(self):
+        """
+        This method wait the HR notification and return its value, otherwise it
+        returns 0
+        """
+        try:
+            self.device.waitForNotifications(2.0)
+        except Exception as e:
+            print(e)
+            return {'HR':0, 'RR':[]}
+        return self.device.delegate.getLastBeat()

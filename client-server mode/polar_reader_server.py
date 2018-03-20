@@ -59,7 +59,6 @@ def statusThread():
 
     while True:
         msg = zServer.recv(copy=False)
-        print(dir(msg))
         if(msg.bytes == b'PING'):
             zServer.send(b'OK')
         else:
