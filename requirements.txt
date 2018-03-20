@@ -1,0 +1,7 @@
+tendo==0.2.8
+requests==2.18.4
+bluepy==1.1.2
+numpy==1.13.3
+influxdb==5.0.0
+udatetime==0.0.16
+pyzmq==17.0.0
