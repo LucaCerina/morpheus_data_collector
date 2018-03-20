@@ -65,10 +65,11 @@ def polarScan():
                     triggerHRThread(devName, dev.addr)
         sleep(10.0)
 
-# Spawn the scanner thread
-scanThread = threading.Thread(name="scanner", target=polarScan)
-scanThread.start()
+if __name__ == "__main__":
+    # Spawn the scanner thread
+    scanThread = threading.Thread(name="scanner", target=polarScan)
+    scanThread.start()
 
-# Spawn the control thread
-controlThread = threading.Thread(name="controller", target=controllerHRThread)
-controlThread.start()
+    # Spawn the control thread
+    controlThread = threading.Thread(name="controller", target=controllerHRThread)
+    controlThread.start()

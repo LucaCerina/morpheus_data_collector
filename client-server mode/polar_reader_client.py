@@ -80,7 +80,7 @@ class HRmonitor():
             return {'HR':0, 'RR':[]}
             print(e)
 
-def heartRateThread(devName, address):
+def heartRateThread(devName, address, SrvAddr='127.0.0.1'):
     """
     This method instantiate the heart rate monitor and read data from it.
     The method automatically manage read failures and terminate on complete
@@ -99,7 +99,7 @@ def heartRateThread(devName, address):
     zSocket = zContext.socket(zmq.PUSH)
     zSocket.setsockopt(zmq.SNDTIMEO, 300)
     zSocket.setsockopt(zmq.RCVTIMEO, 300)
-    zSocket.connect('tcp://127.0.0.1:3000') # TODO do not hardcode IP and port
+    zSocket.connect('tcp://'+SrvAddr+':3000') # TODO do not hardcode IP and port
     deviceID = devName.split(' ')[2]
 
     # Initialize Heart Rate monitor

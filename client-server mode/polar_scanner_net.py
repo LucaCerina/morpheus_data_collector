@@ -1,3 +1,4 @@
+import sys
 from multiprocessing import Process
 import threading
 from time import sleep
@@ -11,14 +12,18 @@ from polar_reader_client import heartRateThread
 polarDevices = {}
 HRThreads = {}
 
+# Server address
+SrvAddr = '127.0.0.1'
+
 def triggerHRThread(devName, address):
     """
     This method spawns an heart rate monitor thread triggered by the Scanner
     The thread ends when the Polar device disconnects
     """
+    global SrvAddr
     HRThreads[devName] = Process(name=devName,
                                           target=heartRateThread,
-                                          args=[devName, address])
+                                          args=[devName, address, SrvAddr])
     HRThreads[devName].start()
 
 def controllerHRThread():
@@ -66,10 +71,16 @@ def polarScan():
                     triggerHRThread(devName, dev.addr)
         sleep(10.0)
 
-# Spawn the scanner thread
-scanThread = threading.Thread(name="scanner", target=polarScan)
-scanThread.start()
+if __name__ == "__main__":
+    # Set server address
+    if(len(sys.argv) > 1):
+        SrvAddr = sys.argv[1]
+    print(SrvAddr)
 
-# Spawn the control thread
-controlThread = threading.Thread(name="controller", target=controllerHRThread)
-controlThread.start()
+    # Spawn the scanner thread
+    scanThread = threading.Thread(name="scanner", target=polarScan)
+    scanThread.start()
+
+    # Spawn the control thread
+    controlThread = threading.Thread(name="controller", target=controllerHRThread)
+    controlThread.start()
