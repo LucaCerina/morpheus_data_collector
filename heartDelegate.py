@@ -28,7 +28,7 @@ class heartDelegate(btle.DefaultDelegate):
         """
         Extract informations from HR message
         """
-        reading = {"HR":None, "RR":list()}
+        reading = {"HR":0, "RR":list()}
         hrFormat = data[0] & 0x01
 
         sensorContact = True

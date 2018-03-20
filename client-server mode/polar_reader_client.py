@@ -74,11 +74,11 @@ class HRmonitor():
         returns 0
         """
         try:
-            self.device.waitForNotifications(1.0)
-            return self.device.delegate.getLastBeat()
+            self.device.waitForNotifications(2.0)
         except Exception as e:
             return {'HR':0, 'RR':[]}
             print(e)
+        return self.device.delegate.getLastBeat()
 
 def heartRateThread(devName, address, SrvAddr='127.0.0.1'):
     """
