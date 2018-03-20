@@ -2,15 +2,16 @@ import os
 import sys
 import uuid
 from time import sleep, time
-import udatetime #RFC3339 required by influxDB
 
 import bluepy.btle as btle
+import udatetime  # RFC3339 required by influxDB
 import zmq
 from bluepy.btle import BTLEException
 from tendo import singleton
 
-sys.path.append('../')
 from heartDelegate import heartDelegate
+
+sys.path.append('../')
 
 class HRmonitor():
     """

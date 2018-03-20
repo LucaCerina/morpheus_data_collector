@@ -2,13 +2,14 @@ import os
 import sys
 import uuid
 from time import sleep, time
-import udatetime
 
 import bluepy.btle as btle
+import udatetime
 from bluepy.btle import BTLEException
 from tendo import singleton
 
 from heartDelegate import heartDelegate
+
 
 class HRmonitor():
     """

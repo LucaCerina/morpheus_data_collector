@@ -1,9 +1,10 @@
 import sys
-from multiprocessing import Process
 import threading
+from multiprocessing import Process
 from time import sleep
 
 import bluepy.btle as btle
+import zmq
 from bluepy.btle import BTLEException
 
 from polar_reader_client import heartRateThread
@@ -76,6 +77,12 @@ if __name__ == "__main__":
     if(len(sys.argv) > 1):
         SrvAddr = sys.argv[1]
     print(SrvAddr)
+
+    # Ping the Server
+    zContext = zmq.Context()
+    zClient = zContext.socket(zmq.CLIENT)
+    zClient.connect('tcp://'+SrvAddr+':5555')
+    zClient.send(b'PING')
 
     # Spawn the scanner thread
     scanThread = threading.Thread(name="scanner", target=polarScan)
