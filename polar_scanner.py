@@ -58,7 +58,7 @@ def polarScan():
             devName = dev.getValueText(0x9)
             if(devName):
                 # Check if device is already present in the list
-                if((devName[0:5] == 'Polar') & (devName not in polarDevices)):
+                if((devName[0:9] == 'Polar H10' or devName[0:9] == 'Polar OH1') & (devName not in polarDevices)):
                     polarDevices[devName] = dev.addr
                     print("Found " + devName + " " + dev.addr)
                     # Spawn an heart rate thread
