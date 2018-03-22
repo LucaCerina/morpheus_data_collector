@@ -1,6 +1,6 @@
 import os
 import sys
-sys.path.append('../')
+sys.path.append(os.getcwd()+'/../')
 import uuid
 from time import sleep, time
 

@@ -8,6 +8,7 @@ import zmq
 from bluepy.btle import BTLEException
 
 from polar_reader_client import heartRateThread
+import config
 
 # Devices and current threads dictionaries
 polarDevices = {}
@@ -74,10 +75,10 @@ def polarScan():
 
 if __name__ == "__main__":
     # Set server address
-    if(len(sys.argv) > 1):
-        SrvAddr = sys.argv[1]
-    print(SrvAddr)
-
+    try:
+        SrvAddr = config.server['address']
+    except Exception as e:
+        SrvAddr = '127.0.0.1'
     # Ping the Server
     try:
         zContext = zmq.Context()
