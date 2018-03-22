@@ -5,16 +5,19 @@ from multiprocessing import Process
 
 import requests
 import zmq
+import udatetime
 
 from influxdb import InfluxDBClient, exceptions
 
 
-def transformMessage(message):
+def transformMessage(message, recvTime):
     output = dict()
     output['measurement'] = "polar_data"
     output['tags'] = {'device': message['deviceID']}
     output['time'] = message['time']
-    output['fields'] = {'HR': message['HR'], 'RR': message['RR']}
+    txDelay = udatetime.to_string(recvTime - udatetime.from_string(message['time']))
+    output['fields'] = {'HR': message['HR'], 'RR': message['RR']
+                        'txDelay':txDelay}
     return output
 
 def receiverThread():
@@ -42,7 +45,8 @@ def receiverThread():
     while True:
         try:
             message = zServer.recv_json()
-            hrBody = transformMessage(message)
+            recvTime = udatetime.utcnow()
+            hrBody = transformMessage(message, recvTime)
             fluxClient.write_points([hrBody])
     #        data.append(message)
         except KeyboardInterrupt:
