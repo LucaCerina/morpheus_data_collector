@@ -98,9 +98,9 @@ if __name__ == "__main__":
         sys.exit(1)
 
     # Spawn the scanner thread
-    scanThread = threading.Thread(name="scanner", target=polarScan)
+    scanThread = Process(name="scanner", target=polarScan)
     scanThread.start()
 
     # Spawn the control thread
-    controlThread = threading.Thread(name="controller", target=controllerHRThread)
+    controlThread = Process(name="controller", target=controllerHRThread)
     controlThread.start()

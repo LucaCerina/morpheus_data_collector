@@ -2,7 +2,7 @@ SYSTEMD_PATH=/lib/systemd/system
 ROOT_FOLDER=$(dirname $(readlink -e $PWD))
 
 echo "[Unit]
-Descriptions= <Polar Scanner>
+Description= <Polar Scanner>
 ConditionPathExists=$ROOT_FOLDER/client-server-mode
 After=multi-user.target
 
