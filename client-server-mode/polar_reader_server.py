@@ -16,7 +16,7 @@ def transformMessage(message, recvTime):
     output['tags'] = {'device': message['deviceID']}
     output['time'] = message['time']
     txDelay = udatetime.to_string(recvTime - udatetime.from_string(message['time']))
-    output['fields'] = {'HR': message['HR'], 'RR': message['RR']
+    output['fields'] = {'HR': message['HR'], 'RR': message['RR'],
                         'txDelay':txDelay}
     return output
 
