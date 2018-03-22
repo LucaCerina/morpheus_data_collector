@@ -1,4 +1,4 @@
-import threading
+from multiprocessing import Process
 from time import sleep
 
 import bluepy.btle as btle
@@ -15,7 +15,7 @@ def triggerHRThread(devName, address):
     This method spawns an heart rate monitor thread triggered by the Scanner
     The thread ends when the Polar device disconnects
     """
-    HRThreads[devName] = threading.Thread(name=devName,
+    HRThreads[devName] = Process(name=devName,
                                           target=heartRateThread,
                                           args=[devName, address])
     HRThreads[devName].start()
@@ -67,9 +67,9 @@ def polarScan():
 
 if __name__ == "__main__":
     # Spawn the scanner thread
-    scanThread = threading.Thread(name="scanner", target=polarScan)
+    scanThread = Process(name="scanner", target=polarScan)
     scanThread.start()
 
     # Spawn the control thread
-    controlThread = threading.Thread(name="controller", target=controllerHRThread)
+    controlThread = Process(name="controller", target=controllerHRThread)
     controlThread.start()
