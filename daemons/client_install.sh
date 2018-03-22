@@ -8,9 +8,9 @@ After=multi-user.target
 
 [Service]
 Type=idle
-User=root
-Group=root
-ExecStart=/usr/bin/python3.5 $PWD/../client-server-mode/polar_scanner_net.py
+User=pi
+Group=users
+ExecStart=sudo /usr/bin/python3.5 $PWD/../client-server-mode/polar_scanner_net.py
 Restart=always
 
 [Install]
