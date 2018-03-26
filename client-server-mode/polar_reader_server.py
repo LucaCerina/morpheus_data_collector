@@ -15,9 +15,9 @@ def transformMessage(message, recvTime):
     output['measurement'] = "polar_data"
     output['tags'] = {'device': message['deviceID']}
     output['time'] = message['time']
-    txDelay = udatetime.to_string(recvTime - udatetime.from_string(message['time']))
+    txDelay = recvTime - udatetime.from_string(message['time'])
     output['fields'] = {'HR': message['HR'], 'RR': message['RR'],
-                        'txDelay':txDelay}
+                        'txDelay':txDelay.total_seconds()}
     return output
 
 def receiverThread():
