@@ -16,5 +16,6 @@ Restart=always
 WantedBy=multi-user.target" > $SYSTEMD_PATH/polar_scan.service
 
 systemctl daemon-reload
+systemctl enable polar_scan.service
 systemctl start polar_scan.service
 
