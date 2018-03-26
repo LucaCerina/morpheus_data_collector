@@ -31,7 +31,7 @@ def heartRateThread(devName, address, SrvAddr='127.0.0.1'):
     zSocket = zContext.socket(zmq.PUSH)
     zSocket.setsockopt(zmq.SNDTIMEO, 300)
     zSocket.setsockopt(zmq.RCVTIMEO, 300)
-    zSocket.connect('tcp://'+SrvAddr+':3000') # TODO do not hardcode IP and port
+    zSocket.connect('tcp://'+SrvAddr+':3000')
     deviceID = devName.split(' ')[2]
 
     # Initialize Heart Rate monitor
