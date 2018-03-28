@@ -3,6 +3,12 @@ from bluepy.btle import BTLEException
 
 from time import sleep
 
+# Useful GATT descriptors
+CCC_descriptor_uuid = "00002902-0000-1000-8000-00805f9b34fb"
+heartRate_service_uuid = "0000180d-0000-1000-8000-00805f9b34fb"
+heartRate_measure_uuid = "00002a37-0000-1000-8000-00805f9b34fb"
+battery_service_uuid = "0000180f-0000-1000-8000-00805f9b34fb"
+
 class heartDelegate(btle.DefaultDelegate):
     """
     Bluepy delegate that handles the recognition of heartbeats
@@ -67,18 +73,16 @@ class HRmonitor():
     This class contains the methods necessary to connect to the device.
     Specifically the Polar OH1.
     """
-    # Useful GATT descriptors
-    CCC_descriptor_uuid = "00002902-0000-1000-8000-00805f9b34fb"
-    heartRate_service_uuid = "0000180d-0000-1000-8000-00805f9b34fb"
-    heartRate_measure_uuid = "00002a37-0000-1000-8000-00805f9b34fb"
-    battery_service_uuid = "0000180f-0000-1000-8000-00805f9b34fb"
 
     def __init__(self, devName, address):
         self.devName = devName
         self.address = address
         try:
             # Connect to the device
-            self.device = btle.Peripheral(self.address)
+            if devName[6:9] == "OH1":
+                self.device = btle.Peripheral(self.address)
+            else:
+                self.device = btle.Peripheral(self.address, addrType="random")
             self.device.setDelegate(heartDelegate())
             print("Connected to: " + self.address)
         
