@@ -81,7 +81,7 @@ def heartRateThread(devName, address, SrvAddr='127.0.0.1'):
                 # Try connection only for momentary disconnections
                 if(disconnCounter < 3):
                     # monitor.terminate()
-                    monitor = HRmonitor(devName, address)
+                    #monitor = HRmonitor(devName, address)
                     if(monitor.device != None):
                         monitor.startMonitor()
                     else:

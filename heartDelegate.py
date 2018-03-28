@@ -1,7 +1,7 @@
 import bluepy.btle as btle
 from bluepy.btle import BTLEException
 
-from time import sleep
+from time import sleep, perf_counter
 
 # Useful GATT descriptors
 CCC_descriptor_uuid = "00002902-0000-1000-8000-00805f9b34fb"
@@ -54,10 +54,8 @@ class heartDelegate(btle.DefaultDelegate):
             offset += 2
         
         rrVals = list()
-        #print("rrPresent: {}".format(rrPresent))
         if rrPresent == 1:
             dataLen = len(self.data)
-            #print("offset: {} dataLen {}".format(offset, dataLen))
             while offset < dataLen:
                 rrValue = int((self.data[offset] & 0xFF) + ((self.data[offset +1] & 0xFF) << 8))
                 offset +=2
@@ -65,7 +63,6 @@ class heartDelegate(btle.DefaultDelegate):
 
         reading["HR"] = hrValue
         reading["RR"] = rrVals
-        #print("{} {} {}".format(hrValue, rrVals, reading)) TODO check why it returns a int sometimes
         return reading
 
 class HRmonitor():
@@ -75,20 +72,22 @@ class HRmonitor():
     """
 
     def __init__(self, devName, address):
-        self.devName = devName
         self.address = address
         try:
             # Connect to the device
             if devName[6:9] == "OH1":
-                self.device = btle.Peripheral(self.address)
+                self.device = btle.Peripheral().withDelegate(heartDelegate())
+                self.addrType = "public"
             else:
-                self.device = btle.Peripheral(self.address, addrType="random")
-            self.device.setDelegate(heartDelegate())
-            print("Connected to: " + self.address)
+                self.device = btle.Peripheral(addrType="random").withDelegate(heartDelegate())
+                self.addrType = "random"
+            #print("Connected to: " + self.address)
         
             # Read descriptors
-            self.heartrate_service = self.device.getServiceByUUID(self.heartRate_service_uuid)
-            self.CCC_descriptor = self.heartrate_service.getDescriptors(forUUID = self.CCC_descriptor_uuid)[0]
+            #self.heartrate_service = self.device.getServiceByUUID(heartRate_service_uuid)
+            self.heartrate_service = btle.Service(self.device, heartRate_service_uuid, 35, 38) #partial hardcoding TODO verify it on H10 
+            #self.CCC_descriptor = self.heartrate_service.getDescriptors(forUUID = CCC_descriptor_uuid)[0]
+            self.CCC_descriptor = btle.Descriptor(self.device, CCC_descriptor_uuid, 38) #partial hardcoding TODO verify it on H10
         except BTLEException as e:
             # Return None if connection fails
             self.device = None
@@ -97,12 +96,13 @@ class HRmonitor():
         """
         This method starts the Polar monitor by writing the CCC descriptor
         """
+        self.device.connect(self.address, self.addrType)
         try:
-            print("Writing CCC...")
+            #print("Writing CCC...")
             #self.CCC_descriptor.write(b"\x00\x00", withResponse=False)
             #sleep(0.05)
-            self.CCC_descriptor.write(b"\x01\x00", withResponse=True)
-            sleep(0.05)
+            self.CCC_descriptor.write(b"\x01\x00", withResponse=False)
+            #sleep(0.05)
             #print("CCC value: " + str(self.CCC_descriptor.read()))
         except Exception as e:          
             print(e)
@@ -128,9 +128,8 @@ class HRmonitor():
         returns 0
         """
         try:
-            self.device.waitForNotifications(2.0)
-        except Exception as e:
-            print(e)
+            self.device.waitForNotifications(1.0)
+        except Exception:
             return {'HR':0, 'RR':[]}
 
         return self.device.delegate.parseBeat()
