@@ -1,5 +1,6 @@
 from multiprocessing import Process
 from time import sleep
+import os
 
 import bluepy.btle as btle
 from bluepy.btle import BTLEException
@@ -66,6 +67,11 @@ def polarScan():
         sleep(10.0)
 
 if __name__ == "__main__":
+    # Set BLE BAD STUFF
+    os.system("echo 3200 > /sys/kernel/debug/bluetooth/hci0/supervision_timeout")
+    os.system("echo 6 > /sys/kernel/debug/bluetooth/hci0/conn_min_interval")
+    os.system("echo 7 > /sys/kernel/debug/bluetooth/hci0/conn_max_interval")
+
     # Spawn the scanner thread
     scanThread = Process(name="scanner", target=polarScan)
     scanThread.start()
