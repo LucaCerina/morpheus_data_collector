@@ -10,6 +10,7 @@ class heartDelegate(btle.DefaultDelegate):
 
     def __init__(self):
         btle.DefaultDelegate.__init__(self)
+        self.data = None
 
     def handleNotification(self, cHandle, data):
         # Heart rate handle
@@ -17,48 +18,42 @@ class heartDelegate(btle.DefaultDelegate):
         self.data = data
         #if(cHandle == 37):
             # HR beats-per-minute byte
-        #    self.message = data[1]
+        #    self.message = self.data[1]
         #elif(cHandle == 16):
         #    self.message = parse_message(data)
 
-    def getLastBeat(self):
-        """
-        Access the delegate message
-        """
-        return self.parse_message(self.data)
-
-    def parse_message(self, data):
+    def parseBeat(self):
         """
         Extract informations from HR message
         """
         reading = {"HR":0, "RR":list()}
-        hrFormat = data[0] & 0x01
+        hrFormat = self.data[0] & 0x01
 
         sensorContact = True
-        contactSupported = not ((data[0] & 0x06) == 0)
+        contactSupported = not ((self.data[0] & 0x06) == 0)
         if contactSupported:
-            sensorContact = ((data[0] & 0x06) >> 1) == 3
+            sensorContact = ((self.data[0] & 0x06) >> 1) == 3
 
-        energyExpended = (data[0] & 0x10) >> 3
+        energyExpended = (self.data[0] & 0x10) >> 3
 
-        rrPresent = (data[0] & 0x10) >> 4
-        hrValue = data[1] + (data[2] << 8) if hrFormat == 1 else data[1]
+        rrPresent = (self.data[0] & 0x10) >> 4
+        hrValue = self.data[1] + (self.data[2] << 8) if hrFormat == 1 else self.data[1]
         if ( not contactSupported & hrValue == 0):
             sensorContact = False
 
         offset = hrFormat + 2
         energy = 0
         if energyExpended == 1:
-            energy = (data[offset] & 0xFF) + ((data[offset + 1] & 0xFF) << 8)
+            energy = (self.data[offset] & 0xFF) + ((self.data[offset + 1] & 0xFF) << 8)
             offset += 2
         
         rrVals = list()
         #print("rrPresent: {}".format(rrPresent))
         if rrPresent == 1:
-            dataLen = len(data)
+            dataLen = len(self.data)
             #print("offset: {} dataLen {}".format(offset, dataLen))
             while offset < dataLen:
-                rrValue = int((data[offset] & 0xFF) + ((data[offset +1] & 0xFF) << 8))
+                rrValue = int((self.data[offset] & 0xFF) + ((self.data[offset +1] & 0xFF) << 8))
                 offset +=2
                 rrVals.append(rrValue)
 
@@ -102,7 +97,7 @@ class HRmonitor():
             print("Writing CCC...")
             #self.CCC_descriptor.write(b"\x00\x00", withResponse=False)
             #sleep(0.05)
-            self.CCC_descriptor.write(b"\x01\x00", withResponse=False)
+            self.CCC_descriptor.write(b"\x01\x00", withResponse=True)
             sleep(0.05)
             #print("CCC value: " + str(self.CCC_descriptor.read()))
         except Exception as e:          
@@ -133,4 +128,5 @@ class HRmonitor():
         except Exception as e:
             print(e)
             return {'HR':0, 'RR':[]}
-        return self.device.delegate.getLastBeat()
+
+        return self.device.delegate.parseBeat()
