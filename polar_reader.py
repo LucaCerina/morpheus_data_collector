@@ -61,8 +61,7 @@ def heartRateThread(devName, address):
                         #timeString = rfc3339.format(sampleTimeNew) #TODO find RFC3339 library with 
                         timeString = udatetime.to_string(udatetime.fromtimestamp(sampleTimeNew))
                         if reading["RR"]:
-                            for i in range(len(reading["RR"])):
-                                print(reading["RR"][i])   
+                            for i in range(len(reading["RR"])):  
                                 output = "{}\t{}\t{}\t{}\n".format(timeString, reading["HR"], reading["RR"][i], readIdx)
                                 filePointer.write(output)
                                 print("{}\t{}".format(deviceName, output, end='', flush=True))

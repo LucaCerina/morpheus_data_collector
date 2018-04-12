@@ -76,18 +76,21 @@ class HRmonitor():
         try:
             # Connect to the device
             if devName[6:9] == "OH1":
-                self.device = btle.Peripheral().withDelegate(heartDelegate())
+                self.device = btle.Peripheral() #.withDelegate(heartDelegate())
                 self.addrType = "public"
+                self.heartrate_service = btle.Service(self.device, heartRate_service_uuid, 35, 38) #partial hardcoding TODO verify it on H10
+                self.CCC_descriptor = btle.Descriptor(self.device, CCC_descriptor_uuid, 38) #partial hardcoding TODO verify it on H10 
             else:
-                self.device = btle.Peripheral(addrType="random").withDelegate(heartDelegate())
+                self.device = btle.Peripheral(addrType="random") #.withDelegate(heartDelegate())
                 self.addrType = "random"
+                self.heartrate_service = btle.Service(self.device, heartRate_service_uuid, 14, 19) #partial hardcoding TODO verify it on H10
+                self.CCC_descriptor = btle.Descriptor(self.device, CCC_descriptor_uuid, 17) #partial hardcoding TODO verify it on H10
+            self.device.setDelegate(heartDelegate())
             #print("Connected to: " + self.address)
         
             # Read descriptors
             #self.heartrate_service = self.device.getServiceByUUID(heartRate_service_uuid)
-            self.heartrate_service = btle.Service(self.device, heartRate_service_uuid, 35, 38) #partial hardcoding TODO verify it on H10 
             #self.CCC_descriptor = self.heartrate_service.getDescriptors(forUUID = CCC_descriptor_uuid)[0]
-            self.CCC_descriptor = btle.Descriptor(self.device, CCC_descriptor_uuid, 38) #partial hardcoding TODO verify it on H10
         except BTLEException as e:
             # Return None if connection fails
             self.device = None
