@@ -1,4 +1,5 @@
 from multiprocessing import Process
+from threading import Thread
 from time import sleep
 import os
 
@@ -73,9 +74,9 @@ if __name__ == "__main__":
     os.system("echo 7 > /sys/kernel/debug/bluetooth/hci0/conn_max_interval")
 
     # Spawn the scanner thread
-    scanThread = Process(name="scanner", target=polarScan)
+    scanThread = Thread(name="scanner", target=polarScan)
     scanThread.start()
 
     # Spawn the control thread
-    controlThread = Process(name="controller", target=controllerHRThread)
+    controlThread = Thread(name="controller", target=controllerHRThread)
     controlThread.start()

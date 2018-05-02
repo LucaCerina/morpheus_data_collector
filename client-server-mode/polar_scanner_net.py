@@ -2,6 +2,7 @@ import sys
 import os
 import threading
 from multiprocessing import Process
+from threading import Thread
 from time import sleep
 
 import bluepy.btle as btle
@@ -103,9 +104,9 @@ if __name__ == "__main__":
         sys.exit(1)
 
     # Spawn the scanner thread
-    scanThread = Process(name="scanner", target=polarScan)
+    scanThread = Thread(name="scanner", target=polarScan)
     scanThread.start()
 
     # Spawn the control thread
-    controlThread = Process(name="controller", target=controllerHRThread)
+    controlThread = Thread(name="controller", target=controllerHRThread)
     controlThread.start()
