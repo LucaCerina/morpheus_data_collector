@@ -75,7 +75,7 @@ def heartRateThread(devName, address):
                                 filePointer.write(output)
                                 filePointer.flush()
                                 print("{}\t{}".format(deviceName, output, end='', flush=True))
-                        os.fsync()                          
+                        os.fsync(filePointer.fileno())                          
                     # Reset disconnection counter for read failures
                     disconnCounter = 0
                 else:

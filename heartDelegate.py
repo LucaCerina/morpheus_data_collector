@@ -86,7 +86,7 @@ class HRmonitor():
                 self.heartrate_service = btle.Service(self.device, heartRate_service_uuid, 14, 19) #partial hardcoding TODO verify it on H10
                 self.CCC_descriptor = btle.Descriptor(self.device, CCC_descriptor_uuid, 17) #partial hardcoding TODO verify it on H10
             self.device.setDelegate(heartDelegate())
-            #print("Connected to: " + self.address)
+            print("Connected to: " + self.address)
         
             # Read descriptors
             #self.heartrate_service = self.device.getServiceByUUID(heartRate_service_uuid)
