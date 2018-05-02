@@ -43,7 +43,6 @@ def heartRateThread(devName, address):
                     # Catch exception when only headers are available on the file
                     readIdx = 0
             else:
-                filePointer.write('TIME\tHR\tRR\tWID\n')
                 readIdx = 0
         else:
             filePointer = open(filename, 'w')
