@@ -32,7 +32,7 @@ def heartRateThread(devName, address):
         deviceName = devName.split(' ')[2]
         filename = deviceName +'.csv'
         if(os.path.isfile('./'+filename)):
-            filePointer = open(filename, 'a+', 0)
+            filePointer = open(filename, 'a+')
             filePosition = filePointer.tell() - 20
             if filePosition > 0:
                 filePointer.seek(filePosition) #TODO: improve the hardcoded value
@@ -46,7 +46,7 @@ def heartRateThread(devName, address):
                 filePointer.write('TIME\tHR\tRR\tWID\n')
                 readIdx = 0
         else:
-            filePointer = open(filename, 'w', 0)
+            filePointer = open(filename, 'w')
             filePointer.write('TIME\tHR\tRR\tWID\n')
 
         monitorStarted = monitor.startMonitor()
@@ -69,11 +69,14 @@ def heartRateThread(devName, address):
                             for i in range(len(reading["RR"])):  
                                 output = "{}\t{}\t{}\t{}\n".format(timeString, reading["HR"], reading["RR"][i], readIdx)
                                 filePointer.write(output)
+                                filePointer.flush()
                                 print("{}\t{}".format(deviceName, output, end='', flush=True))
                         else:
                                 output = "{}\t{}\t{}\t{}\n".format(timeString, reading["HR"], 0, readIdx)
                                 filePointer.write(output)
-                                print("{}\t{}".format(deviceName, output, end='', flush=True))                          
+                                filePointer.flush()
+                                print("{}\t{}".format(deviceName, output, end='', flush=True))
+                        os.fsync()                          
                     # Reset disconnection counter for read failures
                     disconnCounter = 0
                 else:
