@@ -39,12 +39,12 @@ def heartRateThread(devName, address, SrvAddr='127.0.0.1'):
     # Activate the monitor only on correct connection
     if(monitor.device != None):
         # Start the monitor
-        monitor.startMonitor()
+        monitorStarted = monitor.startMonitor()
 
         # Initialize sampleTime
         sampleTimeOld = time() 
         # Reader continuous loop
-        while(True):
+        while(True and monitorStarted):
             try:
                 reading = monitor.getHeartRate()
                 sampleTimeNew = time()
@@ -83,7 +83,7 @@ def heartRateThread(devName, address, SrvAddr='127.0.0.1'):
                     # monitor.terminate()
                     #monitor = HRmonitor(devName, address)
                     if(monitor.device != None):
-                        monitor.startMonitor()
+                        monitorStarted = monitor.startMonitor()
                     else:
                         sleep(0.1)
                 else:

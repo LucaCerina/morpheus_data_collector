@@ -99,16 +99,18 @@ class HRmonitor():
         """
         This method starts the Polar monitor by writing the CCC descriptor
         """
-        self.device.connect(self.address, self.addrType)
         try:
+            self.device.connect(self.address, self.addrType)
             #print("Writing CCC...")
             #self.CCC_descriptor.write(b"\x00\x00", withResponse=False)
             #sleep(0.05)
             self.CCC_descriptor.write(b"\x01\x00", withResponse=False)
+            return True
             #sleep(0.05)
             #print("CCC value: " + str(self.CCC_descriptor.read()))
         except Exception as e:          
             print(e)
+            return False
 
     def stopMonitor(self):
         """
