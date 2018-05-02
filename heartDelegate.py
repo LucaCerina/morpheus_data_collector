@@ -117,6 +117,7 @@ class HRmonitor():
         This method stops the Polar monitor by resetting the CCC descriptor
         """
         self.CCC_descriptor.write(b"\x00\x00", withResponse=False)
+        print("Ended notifications {}".format(self.address))
 
     def terminate(self):
         """
