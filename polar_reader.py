@@ -35,7 +35,7 @@ def heartRateThread(devName, address):
             filePointer = open(filename, 'a+', 0)
             filePosition = filePointer.tell() - 20
             if filePosition > 0:
-                filePointer.seek(filePosition #TODO: improve the hardcoded value
+                filePointer.seek(filePosition) #TODO: improve the hardcoded value
                 lastLine = filePointer.read()
                 try:
                     readIdx = int(lastLine.split("\t")[-1].split("\n")[0]) + 1
