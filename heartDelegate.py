@@ -73,6 +73,7 @@ class HRmonitor():
 
     def __init__(self, devName, address):
         self.address = address
+        self.devName = devName
         try:
             # Connect to the device
             if devName[6:9] == "OH1":
@@ -86,7 +87,7 @@ class HRmonitor():
                 self.heartrate_service = btle.Service(self.device, heartRate_service_uuid, 14, 19) #partial hardcoding TODO verify it on H10
                 self.CCC_descriptor = btle.Descriptor(self.device, CCC_descriptor_uuid, 17) #partial hardcoding TODO verify it on H10
             self.device.setDelegate(heartDelegate())
-            print("Connected to: " + self.address)
+            #print("Connected to: " + self.address)
         
             # Read descriptors
             #self.heartrate_service = self.device.getServiceByUUID(heartRate_service_uuid)
@@ -99,15 +100,15 @@ class HRmonitor():
         """
         This method starts the Polar monitor by writing the CCC descriptor
         """
+        self.device.connect(self.address, self.addrType)
         try:
-            self.device.connect(self.address, self.addrType)
             #print("Writing CCC...")
             #self.CCC_descriptor.write(b"\x00\x00", withResponse=False)
             #sleep(0.05)
             self.CCC_descriptor.write(b"\x01\x00", withResponse=False)
-            return True
             #sleep(0.05)
             #print("CCC value: " + str(self.CCC_descriptor.read()))
+            return True
         except Exception as e:          
             print(e)
             return False
@@ -117,7 +118,6 @@ class HRmonitor():
         This method stops the Polar monitor by resetting the CCC descriptor
         """
         self.CCC_descriptor.write(b"\x00\x00", withResponse=False)
-        print("Ended notifications {}".format(self.address))
 
     def terminate(self):
         """
@@ -128,13 +128,24 @@ class HRmonitor():
         except Exception as e:
             print(e)
 
+    def keepalive(self):
+        """
+        This method re-inits the device to avoid supervision timeout disconnections
+        """
+        try:
+            self.device.disconnect()
+            self.__init__(self.devName, self.address)
+            self.startMonitor()
+        except Exception as e:
+           print(e)
+
     def getHeartRate(self):
         """
         This method wait the HR notification and return its value, otherwise it
         returns 0
         """
         try:
-            self.device.waitForNotifications(1.0)
+            self.device.waitForNotifications(2.0)
         except Exception:
             return {'HR':0, 'RR':[]}
 
