@@ -10,6 +10,7 @@ import bluepy.btle as btle
 from heartDelegate import HRmonitor, heartDelegate
 from time import sleep, time
 import zmq
+import requests
 
 def transformMessage(message, recvTime):
     output = dict()
@@ -76,18 +77,17 @@ def heartRateThread(devName, address, SrvAddr='127.0.0.1'):
                         # filePointer.write(output)
                         #zSocket.send_string(output)
                         zSocket.send_json(output, zmq.NOBLOCK)
-                        print(output)
                     # Reset disconnection counter for read failures
                     disconnCounter = 0
                 else:
                     print("read failure")
-                    raise(BTLEException("conn fail"))
+                    raise(btle.BTLEException("conn fail"))
             except KeyboardInterrupt:
                 # Terminate the thread on manual interrupt TODO: not the best way
                 monitor.stopMonitor()
                 monitor.terminate()
                 break
-            except BTLEException as e:
+            except btle.BTLEException as e:
                 print("disconnection")
                 # Update counter
                 disconnCounter += 1
@@ -142,15 +142,36 @@ class PolarScanner():
         zContext = zmq.Context()
         zServer = zContext.socket(zmq.PULL)
         zServer.bind('tcp://*:3000')
+            
+        # List to save data when connection is absent
+        backlog_record = []
+        # header for API requests
+        headers = {'Content-Type':'application/json'}
+        URL = 'http://172.18.0.3:1378/api/sleep/send_hr_data'
 
         print("Polar Listening on port 3000...")
         while True:
             try:
                 message = zServer.recv_json()
-                #recvTime = udatetime.utcnow()
-                #hrBody = transformMessage(message, recvTime)
-                #fluxClient.write_points([hrBody])
-    #           data.append(message)
+                print(message)
+                # Assemble data
+                data = {}
+                data['input'] = {'user_id': message['deviceID'], 'timestamp': message['time'], 'hr_data': message['HR']} 
+                # Send data to server
+                try:
+                    print("Sending HR {0:} at time {1:}".format(message['HR'],  message['time']))
+                    req = requests.post(url=URL, headers=headers, json=data)
+
+                    # Check request result
+                    if req.status_code != 200:
+                        print("Req status {}:saving HR record on backlog".format(req.status_code))
+                        backlog_record.append(data)
+                    else:
+                        while len(backlog_record) > 0 and requests.post(url=URL, headers=headers, json=backlog_record[0]).status_code == 200:
+                            del backlog_record[0]
+                except requests.exceptions.ConnectionError:
+                    print("Connection refused: saving HR record on backlog")
+                    backlog_record.append(data)
             except KeyboardInterrupt:
                 break
     
@@ -168,7 +189,7 @@ class PolarScanner():
             # Scan devices
             try:
                 devices = scanner.scan(5)
-            except BTLEException as e:
+            except btle.BTLEException as e:
                 print(e)
                 sleep(2)
                 scanner = btle.Scanner()
@@ -177,7 +198,7 @@ class PolarScanner():
                 devName = dev.getValueText(0x9)
                 if(devName):
                     # Check if device is already present in the list
-                    if((devName[0:9] == 'Polar H10' or devName[0:9] == 'Polar OH1') & (devName not in self.__class__polarDevices)):
+                    if((devName[0:9] == 'Polar H10' or devName[0:9] == 'Polar OH1') & (devName not in self._polarDevices)):
                         self._polarDevices[devName] = dev.addr
                         print("Found " + devName + " " + dev.addr)
                         # Spawn an heart rate thread
