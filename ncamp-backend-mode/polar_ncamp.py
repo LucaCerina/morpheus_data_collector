@@ -6,9 +6,8 @@ from multiprocessing import Process
 import udatetime  # RFC3339 required by influxDB
 
 import bluepy.btle as btle
-sys.path.append(os.getcwd()+'/../')
+#sys.path.append(os.getcwd()+'/../')
 from heartDelegate import HRmonitor, heartDelegate
-from tendo import singleton
 from time import sleep, time
 import zmq
 
@@ -194,7 +193,7 @@ class PolarScanner():
         # Spawn the server thread
         servThread =  Thread(name="server", target=self.serverThread)
         servThread.start()
-        
+
         # Spawn the scanner thread
         scanThread = Thread(name="scanner", target=self.polarScan)
         scanThread.start()
