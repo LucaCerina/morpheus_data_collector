@@ -1,9 +1,10 @@
-from adafruit_mcp3xxx.mcp3008 import MCP3008
+import adafruit_mcp3xxx.mcp3008 as MCP
 from adafruit_mcp3xxx.analog_in import AnalogIn
+from math import log10, fabs
 
 class SPW2430:
-    def __in__(self,mcp)
-        self.chan = AnalogIn(mcp,MCP3008.pin_0) # non so a quale PIN è collegato (decidiamo noi a quali metterli)
+    def __init__(self,mcp):
+        self.chan = AnalogIn(mcp, MCP.P0) # non so a quale PIN è collegato (decidiamo noi a quali metterli)
         
         # da DATASHEET ricavo i parametri: 
         # 0)ADC MCP3008: 10bit
@@ -15,19 +16,18 @@ class SPW2430:
         self.rawRange = 1024 # 2**Nbit con Nbit=10 (0) 
         #V_bias= 0.67 a ingresso nullo uscita di 0.67 V
 
-    def read_noise(self)
+    def read_noise(self):
 
-        noise = self.chan.value #lettura di questo valore in bit
-
+        noise = self.chan.value >> 6 #lettura di questo valore in bit
         #Tramite questa conversione in teoria restituisce il valore convertito in dB
 
         #Non sono sicura dello 0.67, non va magari sottratto all'interno del range? 
         V_noise = (noise * self.Vrange/self.rawRange) - 0.67 
         #Conversione in Pa tramite la sensitività dello strumento
         #moltiplico per 1000 per trasformare in mV e divido per 7.9433 che è la sensitività om mV/Pa
-        P_noise = (V_noise*1000)/7.9433  
+        P_noise = (fabs(V_noise)*1000)/7.9433  
         #classica conversione dai Pa ai dB
-        dB_noise = 20*log10(P_noise/0.00002)
+        dB_noise = 20*log10(1 + (P_noise/0.00002))
 
         return dB_noise # restituisce il valore senza però riposare per 30 secondi come nel LightSensor
       

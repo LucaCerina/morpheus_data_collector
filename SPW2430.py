@@ -5,8 +5,8 @@ import RPi.GPIO as GPIO
 class SPW2430:
     def __init__(self,pin):
         self.pin = pin
-		GPIO.setmode(GPIO.BOARD)
-		GPIO.setup(self.pin, GPIO.IN)
+        GPIO.setmode(GPIO.BOARD)
+        GPIO.setup(self.pin, GPIO.IN)
 
 
     def read_noise(self):
