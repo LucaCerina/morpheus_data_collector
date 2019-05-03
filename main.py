@@ -13,7 +13,7 @@ sys.path.append(os.getcwd()+'/necstcamp-polar-backend/')
 #import polar_ncamp
 import RPi.GPIO as GPIO
 import si7021
-from SPW2430_noise_NEW import SPW2430
+from SPW2430 import SPW2430
 from light_sensor import GA1A12S202
 import busio
 import digitalio

@@ -1,22 +1,35 @@
-import spidev
-import time
-import RPi.GPIO as GPIO
+import adafruit_mcp3xxx.mcp3008 as MCP
+from adafruit_mcp3xxx.analog_in import AnalogIn
+from math import log10, fabs
 
 class SPW2430:
-    def __init__(self,pin):
-        self.pin = pin
-        GPIO.setmode(GPIO.BOARD)
-        GPIO.setup(self.pin, GPIO.IN)
-
+    def __init__(self,mcp):
+        self.chan = AnalogIn(mcp, MCP.P0) # non so a quale PIN è collegato (decidiamo noi a quali metterli)
+        
+        # da DATASHEET ricavo i parametri: 
+        # 0)ADC MCP3008: 10bit
+        # 1)the microphone requires 3.3V DC
+        # 2)0.67V DC bias 
+        # 3)use the “quietest” supply available (on an Arduino, this would be the 3.3V supply). (similar to GA1A12S202) 
+       
+        self.Vrange = 3.3 # (1)  
+        self.rawRange = 1024 # 2**Nbit con Nbit=10 (0) 
+        #V_bias= 0.67 a ingresso nullo uscita di 0.67 V
 
     def read_noise(self):
-        num_cycles = 100
-        tStart = time.perf_counter() #dal momento in cui è stato chiamato
-        for i in range(num_cycles):
-            GPIO.wait_for_edge(self,pin, GPIO.FALLING/RISING)
-            #funzione che rileva il picco! tra l'altro dopo il self non va una virgola?
-			#rilevo poi la durata della funzione, tempo trascorso dall'inizio alla rilevazione del picco
-        duration = time.perf_counter() - tStart
-    #   calcolo la frequenza dei rumori durante la notte.
-        frequency_noise = num_cycles / duration
-        return frequency_noise
+
+        noise = self.chan.value >> 6 #lettura di questo valore in bit
+        #Tramite questa conversione in teoria restituisce il valore convertito in dB
+
+        #Non sono sicura dello 0.67, non va magari sottratto all'interno del range? 
+        V_noise = (noise * self.Vrange/self.rawRange) - 0.67 
+        #Conversione in Pa tramite la sensitività dello strumento
+        #moltiplico per 1000 per trasformare in mV e divido per 7.9433 che è la sensitività om mV/Pa
+        P_noise = (fabs(V_noise)*1000)/7.9433  
+        #classica conversione dai Pa ai dB
+        dB_noise = 20*log10(1 + (P_noise/0.00002))
+
+        return dB_noise # restituisce il valore senza però riposare per 30 secondi come nel LightSensor
+      
+
+      
