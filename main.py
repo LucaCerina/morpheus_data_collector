@@ -228,18 +228,6 @@ def userLogin(username, password):
     userJWT = json.loads(req.content.decode("utf-8"))['token']
     return userJWT
 
-def sendEvent(config, typeEvent):
-    headers = {'Content-Type': 'application/json'}
-    timestamp = udatetime.to_string(udatetime.now())
-    data = {'input' : {'user_id' : 6, 'type': typeEvent, 'timestamp': timestamp}}
-    data['token'] = config['token']
-    req = requests.post('https://staging.api.necstcamp.necst.it/sleep/set_event', headers=headers, json=data)
-
-    if req.status_code != 200:
-        print("ERROR {}:{}".format(req.status_code, req.content))
-    else:
-        print("EVENT OK")
-
 
 # Main routine                       
 if __name__ == "__main__":
@@ -274,14 +262,4 @@ if __name__ == "__main__":
     t4.start()
     #sleep(0.2)
     #t5.start()
-
-    # DEBUG ONLY send a sleep START event
-    sendEvent(config, 'START')
-    while(True):
-        try:
-            sleep(5)
-        except KeyboardInterrupt:
-            # DEBUG ONLY send a sleep STOP event
-            sendEvent(config, 'STOP')
-            break
 
