@@ -25,9 +25,9 @@ class SPW2430:
         V_noise = (noise * self.Vrange/self.rawRange) - 0.67 
         #Conversione in Pa tramite la sensitività dello strumento
         #moltiplico per 1000 per trasformare in mV e divido per 7.9433 che è la sensitività om mV/Pa
-        P_noise = (fabs(V_noise)*1000)/7.9433  
+        P_noise = (fabs(V_noise + 1E-05)*1000)/7.9433  
         #classica conversione dai Pa ai dB
-        dB_noise = 20*log10(1 + (P_noise/0.00002))
+        dB_noise = 20*log10(P_noise/0.00002)
 
         return dB_noise # restituisce il valore senza però riposare per 30 secondi come nel LightSensor
       
