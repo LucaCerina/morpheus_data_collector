@@ -8,9 +8,9 @@ import requests
 import udatetime
 
 #import pmodad2
-sys.path.append(os.getcwd()+'/necstcamp-polar-backend/ncamp-backend-mode/')
-sys.path.append(os.getcwd()+'/necstcamp-polar-backend/')
-#import polar_ncamp
+sys.path.append(os.path.realpath('../necstcamp-polar-backend/ncamp-backend-mode/'))
+sys.path.append(os.path.realpath('../necstcamp-polar-backend/'))
+import polar_ncamp
 import RPi.GPIO as GPIO
 import si7021
 from SPW2430 import SPW2430
@@ -250,8 +250,8 @@ if __name__ == "__main__":
     t4 = threading.Thread(target = noise_thread, args=(config,), name="NOISE")
 
     # Start Polar thread
-    #scanner = polar_ncamp.PolarScanner()
-    #t5 = threading.Thread(target = scanner.start(), name = "POLAR") 
+    scanner = polar_ncamp.PolarScanner()
+    t5 = threading.Thread(target = scanner.start, args=(config,), name = "POLAR") 
 
     t1.start()
     sleep(0.2)
@@ -260,6 +260,6 @@ if __name__ == "__main__":
     t3.start()
     sleep(0.2)
     t4.start()
-    #sleep(0.2)
-    #t5.start()
+    sleep(0.2)
+    t5.start()
 
