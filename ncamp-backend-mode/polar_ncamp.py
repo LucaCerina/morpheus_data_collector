@@ -4,9 +4,10 @@ from threading import Thread
 from multiprocessing import Process
 
 import udatetime  # RFC3339 required by influxDB
+from datetime import timedelta
 
 import bluepy.btle as btle
-#sys.path.append(os.getcwd()+'/../')
+sys.path.append(os.getcwd()+'/../')
 from heartDelegate import HRmonitor, heartDelegate
 from time import sleep, time
 import zmq
@@ -70,13 +71,18 @@ def heartRateThread(devName, address, SrvAddr='127.0.0.1'):
                         timeString = udatetime.to_string(udatetime.fromtimestamp(sampleTimeNew))
                         # output = str(time()) + '\t' + str(beat) + '\t' + str(readIdx) + '\n'
                         # output = str(time()) + '\t' + str(beat) + '\t' + deviceID + '\n'
-                        #if(reading['RR']):
-                        #    output = {'time': timeString, 'HR':reading["HR"], 'RR':reading["RR"], 'deviceID':deviceID}
-                        #else:
-                        output = {'time': timeString, 'HR':reading["HR"], 'RR':-1, 'deviceID':deviceID}
+                        if(reading['RR']):
+                            print(reading['RR'])
+                            for i in range(len(reading['RR'])):
+                                timeString = udatetime.to_string(udatetime.fromtimestamp(sampleTimeNew) + timedelta(milliseconds=reading['RR'][i]))
+                                output = {'time': timeString, 'HR':reading["HR"], 'RR':reading["RR"][i], 'deviceID':deviceID}
+                                zSocket.send_json(output, zmq.NOBLOCK)
+                        else:
+                            output = {'time': timeString, 'HR':reading["HR"], 'RR':-1, 'deviceID':deviceID}
+                            zSocket.send_json(output, zmq.NOBLOCK)
                         # filePointer.write(output)
                         #zSocket.send_string(output)
-                        zSocket.send_json(output, zmq.NOBLOCK)
+                        #zSocket.send_json(output, zmq.NOBLOCK)
                     # Reset disconnection counter for read failures
                     disconnCounter = 0
                 else:
@@ -137,7 +143,7 @@ class PolarScanner():
                 self._polarDevices.pop(item)
                 print("Thread " + item + " destroyed.")
 
-    def serverThread(self):
+    def serverThread(self, config):
         # ZeroMQ server
         zContext = zmq.Context()
         zServer = zContext.socket(zmq.PULL)
@@ -147,7 +153,8 @@ class PolarScanner():
         backlog_record = []
         # header for API requests
         headers = {'Content-Type':'application/json'}
-        URL = 'http://172.18.0.3:1378/api/sleep/send_hr_data'
+        headers['token'] = config['token']
+        URL = 'https://staging.api.necstcamp.necst.it/sleep/send_hr_data'
 
         print("Polar Listening on port 3000...")
         while True:
@@ -159,7 +166,7 @@ class PolarScanner():
                 data['input'] = {'user_id': message['deviceID'], 'timestamp': message['time'], 'hr_data': message['HR']} 
                 # Send data to server
                 try:
-                    print("Sending HR {0:} at time {1:}".format(message['HR'],  message['time']))
+                    print("Sending HR {0:} RR {1:} at time {2:}".format(message['HR'],  message['RR'], message['time']))
                     req = requests.post(url=URL, headers=headers, json=data)
 
                     # Check request result
@@ -205,14 +212,14 @@ class PolarScanner():
                         self.triggerHRThread(devName, dev.addr)
             sleep(10.0)
 
-    def start(self):
+    def start(self, config):
         # Set BLE BAD STUFF
         os.system("echo 3200 > /sys/kernel/debug/bluetooth/hci0/supervision_timeout")
         os.system("echo 6 > /sys/kernel/debug/bluetooth/hci0/conn_min_interval")
         os.system("echo 7 > /sys/kernel/debug/bluetooth/hci0/conn_max_interval")
 
         # Spawn the server thread
-        servThread =  Thread(name="server", target=self.serverThread)
+        servThread =  Thread(name="server", target=self.serverThread, args=(config,))
         servThread.start()
 
         # Spawn the scanner thread
