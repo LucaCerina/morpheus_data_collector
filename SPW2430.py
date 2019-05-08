@@ -13,7 +13,7 @@ class SPW2430:
         # 3)use the “quietest” supply available (on an Arduino, this would be the 3.3V supply). (similar to GA1A12S202) 
        
         self.Vrange = 3.3 # (1)  
-        self.rawRange = 1024 # 2**Nbit con Nbit=10 (0) 
+        self.rawRange = 1023.0 # 2**Nbit con Nbit=10 (0) 
         #V_bias= 0.67 a ingresso nullo uscita di 0.67 V
 
     def read_noise(self):
@@ -22,12 +22,14 @@ class SPW2430:
         #Tramite questa conversione in teoria restituisce il valore convertito in dB
 
         #Non sono sicura dello 0.67, non va magari sottratto all'interno del range? 
-        V_noise = (noise * self.Vrange/self.rawRange) - 0.67 
+        #V_noise = (noise * self.Vrange/self.rawRange) - 0.67 
         #Conversione in Pa tramite la sensitività dello strumento
         #moltiplico per 1000 per trasformare in mV e divido per 7.9433 che è la sensitività om mV/Pa
-        P_noise = (fabs(V_noise + 1E-05)*1000)/7.9433  
+        #P_noise = (fabs(V_noise + 1E-05)*1000)/7.9433  
         #classica conversione dai Pa ai dB
-        dB_noise = 20*log10(P_noise/0.00002)
+        #dB_noise = 20*log10(P_noise/0.00002)
+        V_noise = fabs((noise * self.Vrange/self.rawRange) - 0.67)
+        dB_noise = -42 + 20*log10(1/V_noise) + 20*log10(self.rawRange)
 
         return dB_noise # restituisce il valore senza però riposare per 30 secondi come nel LightSensor
       
