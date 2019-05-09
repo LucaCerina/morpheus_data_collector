@@ -22,13 +22,17 @@ import adafruit_mcp3xxx.mcp3008 as MCP
 from adafruit_mcp3xxx.analog_in import AnalogIn
 from sgp30 import Sgp30
 from smbus2 import SMBusWrapper
-
+import csv
 
 # thread controlling temperature and humidity
 def TH_thread(config):
     thsensor = si7021.si7021(1)
-    # List to save data when connection is absent
-    backlog_record = []
+    
+    # FILE CSV to save data when connection is absent
+    file = open("TH.csv","w+", encoding = "utf-8")
+    writer = csv.writer(file)
+    writer.writerow(["TIME","TEMPERATURE","HUMIDITY"])
+    file.close()
     # header for API requests
     headers = {'Content-Type':'application/json'}
     headers['token'] = config['token']
@@ -45,6 +49,15 @@ def TH_thread(config):
         data = {}
         data['token'] = config['token']
         data['input'] = {'room_id': config['room_id'], 'timestamp': timestamp, 'temperature': json.dumps(temperature), 'humidity': json.dumps(humidity)} 
+        
+        # Il file csv per ora lo lasciamo fuori quindi viene fatto indipendentemente dalla connessione o meno
+        file = open("TH.csv","a", encoding = "utf-8")
+        writer = csv.writer(file)
+        writer.writerow([timestamp,temperature,humidity])
+        file.close()
+        file = open("TH.csv","r+", encoding = "utf-8")
+        file.read()
+
         # Send data to server
         try:
             print("Sending T {0:2.5} H {1:2.5} at time {2:}".format(temperature, humidity, timestamp))
@@ -63,8 +76,11 @@ def TH_thread(config):
 
 # Thread controlling CO2 readings
 def carbon_thread(config):
-    # List to save data when connection is absent
-    backlog_record = []
+    # CVS file to save data when connection is absent
+    file = open("CO2.csv","w+", encoding = "utf-8")
+    writer = csv.writer(file)
+    writer.writerow(["TIME","CO2"])
+    file.close()
     # header for API requests
     headers = {'Content-Type':'application/json'}
     headers['token'] = config['token']
@@ -99,6 +115,15 @@ def carbon_thread(config):
                 co2 = getattr(co2, "data")[0]
             # Assemble data
             timestamp = udatetime.to_string(udatetime.now())
+           
+            #File csv
+            file = open("CO2.csv","a", encoding = "utf-8")
+            writer = csv.writer(file)
+            writer.writerow([timestamp,co2])
+            file.close()
+            file = open("CO2.csv","r+", encoding = "utf-8")
+            file.read()
+
             data = {}
             data['token'] = config['token']
             data['input'] = {'room_id': config['room_id'], 'timestamp': timestamp, 'co2': json.dumps(co2)} 
@@ -120,8 +145,11 @@ def carbon_thread(config):
 
 # Thread to read from TSL sensor ATTENTION SENSOR NEED ADDITONAL FRONTEND TO READ DATA CORRECTLY
 def light_thread(config):
-    # List to save data when connection is absent
-    backlog_record = []
+    # File csv to save data when connection is absent
+    file = open("light.csv","w+", encoding = "utf-8")
+    writer = csv.writer(file)
+    writer.writerow(["TIME","LIGHT"])
+    file.close()
     # header for API requests
     headers = {'Content-Type':'application/json'}
     headers['token'] = config['token']
@@ -147,6 +175,13 @@ def light_thread(config):
 
         # Assemble data
         timestamp = udatetime.to_string(udatetime.now())
+        # Csv file
+        file = open("light.csv","a", encoding = "utf-8")
+        writer = csv.writer(file)
+        writer.writerow([timestamp,light])
+        file.close()
+        file = open("light.csv","r+", encoding = "utf-8")
+        file.read()
         data = {}
         data['token'] = config['token']
         data['input'] = {'room_id': config['room_id'], 'timestamp': timestamp, 'light': json.dumps(light)} 
@@ -168,8 +203,11 @@ def light_thread(config):
 
 # Thread TEMPORARY to read noise from ADC. it sends energy on 30 seconds
 def noise_thread(config):
-        # List to save data when connection is absent
-    backlog_record = []
+    # csv file to save data when connection is absent
+    file = open("noise.csv","w+", encoding = "utf-8")
+    writer = csv.writer(file)
+    writer.writerow(["TIME","NOISE"])
+    file.close()
     # header for API requests
     headers = {'Content-Type':'application/json'}
     headers['token'] = config['token']
@@ -202,6 +240,14 @@ def noise_thread(config):
 
         # Assemble data
         timestamp = udatetime.to_string(udatetime.now())
+        # saving data inside the csv file
+        file = open("noise.csv","a", encoding = "utf-8")
+        writer = csv.writer(file)
+        writer.writerow([timestamp,noise])
+        file.close()
+        file = open("noise.csv","r+", encoding = "utf-8")
+        file.read() 
+        
         data = {}
         data['input'] = {'room_id': config['room_id'], 'timestamp': timestamp, 'noise': json.dumps(noise)} 
         data['token'] = config['token']
