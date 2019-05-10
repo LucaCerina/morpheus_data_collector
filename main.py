@@ -275,7 +275,7 @@ def noise_thread(config):
         noise = 0
         counter = 0
         tStart = perf_counter()
-        while(perf_counter() < (tStart + 30)):
+        while(perf_counter() < (tStart + 5)):
             noise = noise + sensore_n.read_noise()
             counter = counter + 1
         noise = noise / counter
@@ -353,5 +353,5 @@ if __name__ == "__main__":
     sleep(0.5)
     t4.start()
     sleep(0.5)
-    #t5.start()
+    t5.start()
 

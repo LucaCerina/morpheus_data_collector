@@ -28,8 +28,11 @@ class SPW2430:
         #P_noise = (fabs(V_noise + 1E-05)*1000)/7.9433  
         #classica conversione dai Pa ai dB
         #dB_noise = 20*log10(P_noise/0.00002)
-        V_noise = fabs((noise * self.Vrange/self.rawRange) - 0.67)
-        dB_noise = -42 + 20*log10(1/V_noise) + 20*log10(self.rawRange)
+        V_noise = fabs((noise * self.Vrange/self.rawRange) - 0.67) + 0.67
+        #dB_noise = -42 + 20*log10(1/V_noise) + 20*log10(self.rawRange)
+        #dB_noise = -42 + 20*log10(7.9e-03/V_noise)
+        dB_noise = 42 + 20*log10(V_noise/0.67)
+        #print("noise {} V_noise {} db {}".format(noise, V_noise, dB_noise))
 
         return dB_noise # restituisce il valore senza però riposare per 30 secondi come nel LightSensor
       
