@@ -12,6 +12,8 @@ from heartDelegate import HRmonitor, heartDelegate
 from time import sleep, time
 import zmq
 import requests
+import json
+import csv
 
 def transformMessage(message, recvTime):
     output = dict()
@@ -21,7 +23,7 @@ def transformMessage(message, recvTime):
     output['fields'] = {'HR': message['HR'], 'RR': message['RR']}
     return output
 
-def heartRateThread(devName, address, SrvAddr='127.0.0.1'):
+def heartRateThread(devName, address, user_id, SrvAddr='127.0.0.1'):
     """
     This method instantiate the heart rate monitor and read data from it.
     The method automatically manage read failures and terminate on complete
@@ -72,13 +74,12 @@ def heartRateThread(devName, address, SrvAddr='127.0.0.1'):
                         # output = str(time()) + '\t' + str(beat) + '\t' + str(readIdx) + '\n'
                         # output = str(time()) + '\t' + str(beat) + '\t' + deviceID + '\n'
                         if(reading['RR']):
-                            print(reading['RR'])
                             for i in range(len(reading['RR'])):
                                 timeString = udatetime.to_string(udatetime.fromtimestamp(sampleTimeNew) + timedelta(milliseconds=reading['RR'][i]))
-                                output = {'time': timeString, 'HR':reading["HR"], 'RR':reading["RR"][i], 'deviceID':deviceID}
+                                output = {'time': timeString, 'HR':reading["HR"], 'RR':reading["RR"][i], 'user_id':user_id}
                                 zSocket.send_json(output, zmq.NOBLOCK)
                         else:
-                            output = {'time': timeString, 'HR':reading["HR"], 'RR':-1, 'deviceID':deviceID}
+                            output = {'time': timeString, 'HR':reading["HR"], 'RR':-1, 'user_id':user_id}
                             zSocket.send_json(output, zmq.NOBLOCK)
                         # filePointer.write(output)
                         #zSocket.send_string(output)
@@ -115,14 +116,14 @@ class PolarScanner():
         self._HRThreads = {}
         self._SrvAddr = '127.0.0.1'
 
-    def triggerHRThread(self, devName, address):
+    def triggerHRThread(self, devName, address, user_id):
         """
         This method spawns an heart rate monitor thread triggered by the Scanner
         The thread ends when the Polar device disconnects
         """
         self._HRThreads[devName] = Process(name=devName,
                                             target=heartRateThread,
-                                            args=[devName, address, self._SrvAddr])
+                                            args=[devName, address, user_id, self._SrvAddr])
         self._HRThreads[devName].start()
 
     def controllerHRThread(self):
@@ -151,6 +152,12 @@ class PolarScanner():
             
         # List to save data when connection is absent
         backlog_record = []
+        # File backlog
+        file = open("HR_{}.csv".format(config['room_id']), "a+", newline='', encoding="utf-8")
+        writer = csv.writer(file, dialect='excel', lineterminator='\n')
+        if(file.tell() == 0):
+            writer.writerow(["TIME","USER","HR","RR"])
+            file.flush()
         # header for API requests
         headers = {'Content-Type':'application/json'}
         headers['token'] = config['token']
@@ -160,13 +167,14 @@ class PolarScanner():
         while True:
             try:
                 message = zServer.recv_json()
-                print(message)
                 # Assemble data
                 data = {}
-                data['input'] = {'user_id': message['deviceID'], 'timestamp': message['time'], 'hr_data': message['HR']} 
+                data['input'] = {'user_id': message['user_id'], 'timestamp': message['time'], 'hr_data': message['HR']} 
                 # Send data to server
                 try:
-                    print("Sending HR {0:} RR {1:} at time {2:}".format(message['HR'],  message['RR'], message['time']))
+                    print("Sending HR {0:} RR {1:} at time {2:} with ID {3:}".format(message['HR'],  message['RR'], message['time'], data['input']['user_id']))
+                    writer.writerow([message['time'], data['input']['user_id'], message['HR'], message['RR']])
+                    file.flush()
                     req = requests.post(url=URL, headers=headers, json=data)
 
                     # Check request result
@@ -180,12 +188,13 @@ class PolarScanner():
                     print("Connection refused: saving HR record on backlog")
                     backlog_record.append(data)
             except KeyboardInterrupt:
+                file.close()
                 break
     
         zServer.close()
         zContext.term()
 
-    def polarScan(self):
+    def polarScan(self, config):
         """
         This method defines the BLE scanner that searches Polar devices and trigger
         the heart rate thread when a new device is found
@@ -209,8 +218,23 @@ class PolarScanner():
                         self._polarDevices[devName] = dev.addr
                         print("Found " + devName + " " + dev.addr)
                         # Spawn an heart rate thread
-                        self.triggerHRThread(devName, dev.addr)
+                        user_id = self.polarAssociation(config, devName)
+                        self.triggerHRThread(devName, dev.addr, user_id)
             sleep(10.0)
+
+    def polarAssociation(self, config, devName):
+        deviceId = devName.split(' ')[2]
+        
+        headers = {'Content-Type': 'application/json'}
+        headers['authorization'] = config['token']
+        URL = 'https://staging.api.necstcamp.necst.it/talk/get_sensor_association'
+
+        req = requests.get(url=URL, headers=headers, params = {'sensor_id': deviceId})
+        if req.status_code == 200:
+            data = json.loads(str(req.content, 'utf-8'))[0]
+            return data['user_id']
+        else:
+            return deviceId
 
     def start(self, config):
         # Set BLE BAD STUFF
@@ -223,7 +247,7 @@ class PolarScanner():
         servThread.start()
 
         # Spawn the scanner thread
-        scanThread = Thread(name="scanner", target=self.polarScan)
+        scanThread = Thread(name="scanner", target=self.polarScan, args=(config,))
         scanThread.start()
 
         # Spawn the control thread
