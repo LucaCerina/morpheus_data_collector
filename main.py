@@ -32,10 +32,11 @@ def TH_thread(config):
     # Memory backlog
     backlog_record = []
     # File backlog
-    file = open("TH.csv","a+", newline='', encoding = "utf-8")
+    file = open("TH_{}.csv".format(config['room_id']),"a+", newline='', encoding = "utf-8")
     writer = csv.writer(file, dialect='excel', lineterminator='\n')
     if(file.tell() == 0):
         writer.writerow(["TIME","TEMPERATURE","HUMIDITY"])
+        file.flush()
     #file.close()
     # header for API requests
     headers = {'Content-Type':'application/json'}
@@ -87,10 +88,11 @@ def carbon_thread(config):
     # Memory backlog
     backlog_record = []
     # File backlog
-    file = open("CARB.csv","a+", newline='', encoding = "utf-8")
+    file = open("CARB_{}.csv".format(config['room_id']),"a+", newline='', encoding = "utf-8")
     writer = csv.writer(file, dialect='excel', lineterminator='\n')
     if(file.tell() == 0):
         writer.writerow(["TIME","CO2"])
+        file.flush()
     #file.close()
 
     # header for API requests
@@ -178,10 +180,11 @@ def light_thread(config):
     # Memory backlog
     backlog_record = []
     # File backlog
-    file = open("LHT.csv","a+", newline='', encoding = "utf-8")
+    file = open("LHT_{}.csv".format(config['room_id']),"a+", newline='', encoding = "utf-8")
     writer = csv.writer(file, dialect='excel', lineterminator='\n')
     if(file.tell() == 0):
         writer.writerow(["TIME","LIGHT"])
+        file.flush()
     #file.close()
 
     # header for API requests
@@ -244,10 +247,11 @@ def noise_thread(config):
     # Memory backlog
     backlog_record = []
     # File backlog
-    file = open("NOI.csv","a+", newline='', encoding = "utf-8")
+    file = open("NOI_{}.csv".format(config['room_id']),"a+", newline='', encoding = "utf-8")
     writer = csv.writer(file, dialect='excel', lineterminator='\n')
     if(file.tell() == 0):
         writer.writerow(["TIME","NOISE"])
+        file.flush()
     #file.close()
 
     # header for API requests
@@ -320,6 +324,20 @@ def userLogin(username, password):
     userJWT = json.loads(req.content.decode("utf-8"))['token']
     return userJWT
 
+def getSensorAssociation(config):
+    headers = {'Content-Type': 'application/json'}
+    headers['authorization'] = config['token']
+    URL = 'https://staging.api.necstcamp.necst.it/talk/get_sensor_association'
+
+    config['polar_id'] = {}
+    for user_id in config['user_id']:
+        req = requests.get(url=URL, headers=headers, params = {'user_id': user_id})
+        if(req.status_code == 200):
+            print(req.content)
+            data = json.loads(str(req.content, 'utf-8'))[0]
+            print(data)
+            config['polar_id'][data['sensor_id']] = data['user_id']
+
 
 # Main routine                       
 if __name__ == "__main__":
@@ -328,6 +346,8 @@ if __name__ == "__main__":
         config = json.load(configFile)
 
     config['token'] = userLogin(config["user"], config["pwd"])
+    #getSensorAssociation(config)
+    #print(config)
 
     # Start temperature and humidity thread
     t1 = threading.Thread(target = TH_thread, args=(config,), name="TempHumi")
