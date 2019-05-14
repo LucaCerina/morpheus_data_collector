@@ -34,7 +34,7 @@ class SPW2430:
         dB_noise = 42 + 20*log10(V_noise/0.67)
         #print("noise {} V_noise {} db {}".format(noise, V_noise, dB_noise))
 
-        return dB_noise # restituisce il valore senza però riposare per 30 secondi come nel LightSensor
+        return noise # restituisce il valore senza però riposare per 30 secondi come nel LightSensor
       
 
       
