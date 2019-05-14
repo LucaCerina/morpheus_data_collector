@@ -227,7 +227,7 @@ class PolarScanner():
         
         headers = {'Content-Type': 'application/json'}
         headers['authorization'] = config['token']
-        URL = 'https://staging.api.necstcamp.necst.it/talk/get_sensor_association'
+        URL = 'https://api.necstcamp.necst.it/talk/get_sensor_association'
 
         req = requests.get(url=URL, headers=headers, params = {'sensor_id': deviceId})
         if req.status_code == 200:
