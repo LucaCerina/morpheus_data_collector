@@ -41,7 +41,7 @@ def TH_thread(config):
     # header for API requests
     headers = {'Content-Type':'application/json'}
     headers['token'] = config['token']
-    URL = 'https://staging.api.necstcamp.necst.it/sleep/send_room_data'
+    URL = 'https://api.necstcamp.necst.it/sleep/send_room_data'
 
     while(True):
         # Wait 30 seconds
@@ -98,7 +98,7 @@ def carbon_thread(config):
     # header for API requests
     headers = {'Content-Type':'application/json'}
     headers['token'] = config['token']
-    URL = 'https://staging.api.necstcamp.necst.it/sleep/send_room_data'
+    URL = 'https://api.necstcamp.necst.it/sleep/send_room_data'
     # Setup GPIO switch for sensor reset
     GPIO.setmode(GPIO.BCM)
     GPIO.setup(20, GPIO.IN)
@@ -190,7 +190,7 @@ def light_thread(config):
     # header for API requests
     headers = {'Content-Type':'application/json'}
     headers['token'] = config['token']
-    URL = 'https://staging.api.necstcamp.necst.it/sleep/send_room_data'
+    URL = 'https://api.necstcamp.necst.it/sleep/send_room_data'
    
     # create the spi bus
     spi = busio.SPI(clock=board.SCK, MISO=board.MISO, MOSI=board.MOSI)
@@ -257,7 +257,7 @@ def noise_thread(config):
     # header for API requests
     headers = {'Content-Type':'application/json'}
     headers['token'] = config['token']
-    URL = 'https://staging.api.necstcamp.necst.it/sleep/send_room_data'
+    URL = 'https://api.necstcamp.necst.it/sleep/send_room_data'
    
     # Init sensor
     #create the spi  bus
@@ -327,7 +327,7 @@ def userLogin(username, password):
 def getSensorAssociation(config):
     headers = {'Content-Type': 'application/json'}
     headers['authorization'] = config['token']
-    URL = 'https://staging.api.necstcamp.necst.it/talk/get_sensor_association'
+    URL = 'https://api.necstcamp.necst.it/talk/get_sensor_association'
 
     config['polar_id'] = {}
     for user_id in config['user_id']:
