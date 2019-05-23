@@ -161,7 +161,7 @@ class PolarScanner():
         # header for API requests
         headers = {'Content-Type':'application/json'}
         headers['token'] = config['token']
-        URL = 'https://staging.api.necstcamp.necst.it/sleep/send_hr_data'
+        URL = 'https://api.necstcamp.necst.it/sleep/send_hr_data'
 
         print("Polar Listening on port 3000...")
         while True:
