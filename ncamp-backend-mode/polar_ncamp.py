@@ -169,7 +169,7 @@ class PolarScanner():
                 message = zServer.recv_json()
                 # Assemble data
                 data = {}
-                data['input'] = {'user_id': message['user_id'], 'timestamp': message['time'], 'hr_data': message['HR']} 
+                data['input'] = {'user_id': message['user_id'], 'timestamp': message['time'], 'hr_data': message['HR'], 'rr_data': message['RR']} 
                 # Send data to server
                 try:
                     print("Sending HR {0:} RR {1:} at time {2:} with ID {3:}".format(message['HR'],  message['RR'], message['time'], data['input']['user_id']))
