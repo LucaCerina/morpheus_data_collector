@@ -3,6 +3,7 @@ import sys
 import os
 import threading
 from time import perf_counter, sleep
+from datetime import datetime
 
 import requests
 import udatetime
@@ -40,6 +41,9 @@ def TH_thread(config):
     #file.close()
     # header for API requests
     headers = {'Content-Type':'application/json'}
+    # Check if token is available
+    if config['token'] == '':
+        config['token'] = userLogin(config['user'], config['pwd'])
     headers['token'] = config['token']
     URL = 'https://api.necstcamp.necst.it/sleep/send_room_data'
 
@@ -52,6 +56,9 @@ def TH_thread(config):
         # Assemble data
         timestamp = udatetime.to_string(udatetime.now())
         data = {}
+        # Check if token is available
+        if config['token'] == '':
+            config['token'] = userLogin(config['user'], config['pwd'])
         data['token'] = config['token']
         data['input'] = {'room_id': config['room_id'], 'timestamp': timestamp, 'temperature': json.dumps(temperature), 'humidity': json.dumps(humidity)} 
         
@@ -83,6 +90,19 @@ def TH_thread(config):
             file.close()
             break
 
+def sgp_calibrate(sgp):
+    print("Init baseline and store it")
+    sgp.iaq_init()
+    # Warm up IAQ
+    for _ in range(20):
+        sleep(1)
+        sgp.iaq_measure()
+    baseline = sgp.get_iaq_baseline()
+    print("baseline {}".format(baseline))
+    with open("sgpbaseline.txt", "w") as base:
+        json.dump(baseline, base)
+        base.close()
+
 # Thread controlling CO2 readings
 def carbon_thread(config):
     # Memory backlog
@@ -97,6 +117,9 @@ def carbon_thread(config):
 
     # header for API requests
     headers = {'Content-Type':'application/json'}
+    # Check if token is available
+    if config['token'] == '':
+        config['token'] = userLogin(config['user'], config['pwd'])
     headers['token'] = config['token']
     URL = 'https://api.necstcamp.necst.it/sleep/send_room_data'
     # Setup GPIO switch for sensor reset
@@ -108,17 +131,7 @@ def carbon_thread(config):
     i2c_bus = busio.I2C(board.SCL, board.SDA, frequency=100000)
     sgp = sgp30(i2c_bus) #Sgp30(bus, baseline_filename = "sgpbaseline.txt")
     if(GPIO.input(20) == 1):
-        print("Init baseline and store it")
-        sgp.iaq_init()
-        # Warm up IAQ
-        for _ in range(20):
-            sleep(1)
-            sgp.iaq_measure()
-        baseline = sgp.get_iaq_baseline()
-        print("baseline {}".format(baseline))
-        with open("sgpbaseline.txt", "w") as base:
-            json.dump(baseline, base)
-            base.close()
+        sgp_calibrate(sgp)
     else:
         with open("sgpbaseline.txt", "r") as base:
             baseline = json.load(base)
@@ -143,6 +156,12 @@ def carbon_thread(config):
             #co2 = getattr(co2, "data")[0]
         # Assemble data
         timestamp = udatetime.to_string(udatetime.now())
+
+        # Recalibrate sensor if necessary
+        tnow = datetime.now()
+        tset = [datetime(tnow.year,tnow.month,tnow.day,hour=11,minute=58), datetime(tnow.year,tnow.month,tnow.day,hour=12,minute=2)]
+        if((tnow>tset[0]) & (tnow>tset[1])):
+            sgp_calibrate(sgp)
         
         #File csv
         #file = open("CO2.csv","a", encoding = "utf-8")
@@ -154,6 +173,9 @@ def carbon_thread(config):
         #file.read()
 
         data = {}
+        # Check if token is available
+        if config['token'] == '':
+            config['token'] = userLogin(config['user'], config['pwd'])
         data['token'] = config['token']
         data['input'] = {'room_id': config['room_id'], 'timestamp': timestamp, 'co2': json.dumps(co2)} 
         # Send data to server
@@ -189,6 +211,9 @@ def light_thread(config):
 
     # header for API requests
     headers = {'Content-Type':'application/json'}
+    # Check if token is available
+    if config['token'] == '':
+        config['token'] = userLogin(config['user'], config['pwd'])
     headers['token'] = config['token']
     URL = 'https://api.necstcamp.necst.it/sleep/send_room_data'
    
@@ -221,6 +246,9 @@ def light_thread(config):
         #file = open("light.csv","r+", encoding = "utf-8")
         #file.read()
         data = {}
+        # Check if token is available
+        if config['token'] == '':
+            config['token'] = userLogin(config['user'], config['pwd'])
         data['token'] = config['token']
         data['input'] = {'room_id': config['room_id'], 'timestamp': timestamp, 'light': json.dumps(light)} 
         # Send data to server
@@ -256,6 +284,9 @@ def noise_thread(config):
 
     # header for API requests
     headers = {'Content-Type':'application/json'}
+    # Check if token is available
+    if config['token'] == '':
+        config['token'] = userLogin(config['user'], config['pwd'])
     headers['token'] = config['token']
     URL = 'https://api.necstcamp.necst.it/sleep/send_room_data'
    
@@ -296,6 +327,9 @@ def noise_thread(config):
         #file.read() 
         
         data = {}
+        # Check if token is available
+        if config['token'] == '':
+            config['token'] = userLogin(config['user'], config['pwd'])
         data['input'] = {'room_id': config['room_id'], 'timestamp': timestamp, 'noise': json.dumps(noise)} 
         data['token'] = config['token']
         # Send data to server
@@ -321,8 +355,11 @@ def userLogin(username, password):
     headers = {'Content-Type': 'application/json'}
     data = {'username': username, 'password': password}
     req = requests.post('https://staging.api.necstcamp.necst.it/users/login', headers=headers, json=data)
-    userJWT = json.loads(req.content.decode("utf-8"))['token']
-    return userJWT
+    if(req.status_code == 200):
+        userJWT = json.loads(req.content.decode("utf-8"))['token']
+        return userJWT
+    else:
+        return ''
 
 def getSensorAssociation(config):
     headers = {'Content-Type': 'application/json'}
