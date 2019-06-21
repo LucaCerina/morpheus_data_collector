@@ -354,7 +354,7 @@ def noise_thread(config):
 def userLogin(username, password):
     headers = {'Content-Type': 'application/json'}
     data = {'username': username, 'password': password}
-    req = requests.post('https://staging.api.necstcamp.necst.it/users/login', headers=headers, json=data)
+    req = requests.post('https://api.necstcamp.necst.it/users/login', headers=headers, json=data)
     if(req.status_code == 200):
         userJWT = json.loads(req.content.decode("utf-8"))['token']
         return userJWT
