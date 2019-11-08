@@ -26,6 +26,8 @@ from adafruit_sgp30 import Adafruit_SGP30 as sgp30
 from smbus2 import SMBusWrapper
 import csv
 
+URL = 'https://api.necstcamp.necst.it/'
+
 # thread controlling temperature and humidity
 def TH_thread(config):
     thsensor = si7021.si7021(1)
@@ -45,7 +47,7 @@ def TH_thread(config):
     if config['token'] == '':
         config['token'] = userLogin(config['user'], config['pwd'])
     headers['token'] = config['token']
-    URL = 'https://api.necstcamp.necst.it/sleep/send_room_data'
+    TH_URL = URL + 'sleep/send_room_data'
 
     while(True):
         # Wait 30 seconds
@@ -74,14 +76,14 @@ def TH_thread(config):
         # Send data to server
         try:
             print("Sending T {0:2.5} H {1:2.5} at time {2:}".format(temperature, humidity, timestamp))
-            req = requests.post(url=URL, headers=headers, json=data)
+            req = requests.post(url=TH_URL, headers=headers, json=data)
 
             # Check request result
             if req.status_code != 200:
                 print("Req status {}:saving TH record on backlog".format(req.status_code))
                 backlog_record.append(data)
             else:
-                while len(backlog_record) > 0 and requests.post(url=URL, headers=headers, json=backlog_record[0]).status_code == 200:
+                while len(backlog_record) > 0 and requests.post(url=TH_URL, headers=headers, json=backlog_record[0]).status_code == 200:
                     del backlog_record[0]
         except requests.exceptions.ConnectionError:
             print("Connection refused: saving TH record on backlog")
@@ -121,7 +123,7 @@ def carbon_thread(config):
     if config['token'] == '':
         config['token'] = userLogin(config['user'], config['pwd'])
     headers['token'] = config['token']
-    URL = 'https://api.necstcamp.necst.it/sleep/send_room_data'
+    CO_URL = URL + 'sleep/send_room_data'
     # Setup GPIO switch for sensor reset
     GPIO.setmode(GPIO.BCM)
     GPIO.setup(20, GPIO.IN)
@@ -181,14 +183,14 @@ def carbon_thread(config):
         # Send data to server
         try:
             print("Sending CO2 {0:} at time {1:}".format(co2, timestamp))
-            req = requests.post(url=URL, headers=headers, json=data)
+            req = requests.post(url=CO_URL, headers=headers, json=data)
 
             # Check request result
             if req.status_code != 200:
                 print("Req status {}:saving CO2 record on backlog".format(req.status_code))
                 backlog_record.append(data)
             else:
-                while len(backlog_record) > 0 and requests.post(url=URL, headers=headers, json=backlog_record[0]).status_code == 200:
+                while len(backlog_record) > 0 and requests.post(url=CO_URL, headers=headers, json=backlog_record[0]).status_code == 200:
                     del backlog_record[0]
         except requests.exceptions.ConnectionError:
             print("Connection refused: saving CO2 record on backlog")
@@ -215,7 +217,7 @@ def light_thread(config):
     if config['token'] == '':
         config['token'] = userLogin(config['user'], config['pwd'])
     headers['token'] = config['token']
-    URL = 'https://api.necstcamp.necst.it/sleep/send_room_data'
+    LH_URL = URL + 'sleep/send_room_data'
    
     # create the spi bus
     spi = busio.SPI(clock=board.SCK, MISO=board.MISO, MOSI=board.MOSI)
@@ -254,14 +256,14 @@ def light_thread(config):
         # Send data to server
         try:
             print("Sending LHT {0:4.5} at time {1:}".format(light, timestamp))
-            req = requests.post(url=URL, headers=headers, json=data)
+            req = requests.post(url=LH_URL, headers=headers, json=data)
 
             # Check request result
             if req.status_code != 200:
                 print("Req status {}:saving LIGHT record on backlog".format(req.status_code))
                 backlog_record.append(data)
             else:
-                while len(backlog_record) > 0 and requests.post(url=URL, headers=headers, json=backlog_record[0]).status_code == 200:
+                while len(backlog_record) > 0 and requests.post(url=LH_URL, headers=headers, json=backlog_record[0]).status_code == 200:
                     del backlog_record[0]
         except requests.exceptions.ConnectionError:
             print("Connection refused: saving LIGHT record on backlog")
@@ -288,7 +290,7 @@ def noise_thread(config):
     if config['token'] == '':
         config['token'] = userLogin(config['user'], config['pwd'])
     headers['token'] = config['token']
-    URL = 'https://api.necstcamp.necst.it/sleep/send_room_data'
+    NOI_URL = URL + 'sleep/send_room_data'
    
     # Init sensor
     #create the spi  bus
@@ -335,14 +337,14 @@ def noise_thread(config):
         # Send data to server
         try:
             print("Sending NOI {0:4.5} at time {1:}".format(noise, timestamp))
-            req = requests.post(url=URL, headers=headers, json=data)
+            req = requests.post(url=NOI_URL, headers=headers, json=data)
 
             # Check request result
             if req.status_code != 200:
                 print("Req status {}:saving NOISE record on backlog".format(req.status_code))
                 backlog_record.append(data)
             else:
-                while len(backlog_record) > 0 and requests.post(url=URL, headers=headers, json=backlog_record[0]).status_code == 200:
+                while len(backlog_record) > 0 and requests.post(url=NOI_URL, headers=headers, json=backlog_record[0]).status_code == 200:
                     del backlog_record[0]
         except requests.exceptions.ConnectionError:
             print("Connection refused: saving NOISE record on backlog")
@@ -355,7 +357,7 @@ def userLogin(username, password):
     headers = {'Content-Type': 'application/json'}
     data = {'username': username, 'password': password}
     try:
-        req = requests.post('https://api.necstcamp.necst.it/users/login', headers=headers, json=data)
+        req = requests.post(URL + 'users/login', headers=headers, json=data)
         if(req.status_code == 200):
             userJWT = json.loads(req.content.decode("utf-8"))['token']
             return userJWT
@@ -367,11 +369,11 @@ def userLogin(username, password):
 def getSensorAssociation(config):
     headers = {'Content-Type': 'application/json'}
     headers['authorization'] = config['token']
-    URL = 'https://api.necstcamp.necst.it/talk/get_sensor_association'
+    S_URL = URL + 'talk/get_sensor_association'
 
     config['polar_id'] = {}
     for user_id in config['user_id']:
-        req = requests.get(url=URL, headers=headers, params = {'user_id': user_id})
+        req = requests.get(url=S_URL, headers=headers, params = {'user_id': user_id})
         if(req.status_code == 200):
             print(req.content)
             data = json.loads(str(req.content, 'utf-8'))[0]
