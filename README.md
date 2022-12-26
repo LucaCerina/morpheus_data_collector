@@ -24,5 +24,9 @@ Each node employs a simple json file as a configuration to know the id of the ro
 ### Dependencies
 See `requirements.txt` files in the folders.
 
+### Currently missing
+* Schematics with the wiring of the sensors
+* Test environment and examples
+
 ## Acknowledgments to project contributors
 Davide Bertolotti, Daniele de Vincenti, Andrea Damiani, and Rolando Brondolin during their time at NECSTLab, Politecnico di Milano
