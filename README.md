@@ -1,9 +1,12 @@
 # Morpheus project: smart ambient data collector
 This repository contains the code used for the _Morpheus_ project inside the broader [NecstCamp](https://necstcamp.necst.it/) project at Politecnico di Milano in 2019.
 Specifically, the project aimed to analyze people's sleep collecting information about their heart rate, with a Polar OH1 device, and the quality of the sleeping room, collecting temperature, humidity, CO2, noise and light of the bedroom.
+
 The data from the sensor is sent to a remote InfluxDB instance via REST API and locally stored using CSV format.
+
 The whole system runs as a Linux service to start automatically on a Raspberry-based system.
 Every sensor runs on separate thread to handle errors in sampling, delayed response from collection server or else.
+
 Each node employs a simple json file as a configuration to know the id of the room in which it was installed, and the id of the participants sleeping there. No personal data is stored on the physical devices
 
 ## Structure of the repo
