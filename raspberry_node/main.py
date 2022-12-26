@@ -9,8 +9,8 @@ import requests
 import udatetime
 
 #import pmodad2
-sys.path.append(os.path.realpath('../necstcamp-polar-backend/ncamp-backend-mode/'))
-sys.path.append(os.path.realpath('../necstcamp-polar-backend/'))
+sys.path.append(os.path.realpath('../polar-backend/ncamp-backend-mode/'))
+sys.path.append(os.path.realpath('../polar-backend/'))
 import polar_ncamp
 import RPi.GPIO as GPIO
 import si7021
