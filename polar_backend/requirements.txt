@@ -1,7 +1,7 @@
 tendo==0.2.8
 requests>=2.31.0
 bluepy==1.1.4
-numpy==1.13.3
+numpy>=1.22
 influxdb==5.0.0
 udatetime==0.0.16
 pyzmq==17.0.0
